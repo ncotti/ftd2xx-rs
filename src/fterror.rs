@@ -75,3 +75,17 @@ impl TryFrom<u32> for FtError {
         }
     }
 }
+
+/// This macro will try to execute the "FT_X" function inside an `unsafe{}`
+/// statement. If it returns anything other than a FT_OK status code, it will
+/// return from the functions it was called with an `Err(FtError)`.
+macro_rules! ft_try {
+    ($expr:expr) => {{
+        let status = unsafe { $expr };
+        if status != FT_OK {
+            return Err(FtError::try_from(status).unwrap());
+        }
+    }};
+}
+
+pub(crate) use ft_try;
