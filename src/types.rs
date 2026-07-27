@@ -48,9 +48,8 @@ pub struct DeviceInfo {
 
     usb_location_id: u32,
 
-    // TODO set as strings
     serial_number: [i8; 16],
-    description: [i8; 64],
+    description: String,
 
     handle: FT_HANDLE,
 }
@@ -65,8 +64,19 @@ impl DeviceInfo {
             pid: (ft_device_info.ID & 0xFFFF) as u16,
             usb_location_id: ft_device_info.LocId,
             serial_number: ft_device_info.SerialNumber,
-            description: ft_device_info.Description,
+            description: i8_array_to_string(&ft_device_info.Description),
             handle: ft_device_info.ftHandle,
         }
     }
+}
+
+fn i8_array_to_string(buf: &[i8]) -> String {
+    let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
+
+    let bytes: Vec<u8> = buf[..len]
+        .iter()
+        .map(|&b| b as u8)
+        .collect();
+
+    String::from_utf8_lossy(&bytes).into_owned()
 }
