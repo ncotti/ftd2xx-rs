@@ -16,4 +16,8 @@ fn main() {
     let device_list = get_device_info_list(5).unwrap();
 
     println!("{:?}", device_list);
+
+    let some_device = get_device_info_detail(2).unwrap();
+
+    println!("{:?}", some_device);
 }

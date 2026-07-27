@@ -2,10 +2,11 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    fterror::{FtError, ft_try},
-    types::DeviceInfo,
+    DeviceType, fterror::{FtError, ft_try}, types::DeviceInfo,
 };
 use ftd2xx_sys::*;
+
+use std::ffi::c_void;
 
 /// 3.1 FT_SetVIDPID
 pub fn set_vid_pid(vid: u16, pid: u16) -> Result<(), FtError> {
@@ -62,8 +63,34 @@ pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DeviceInfo>, F
 }
 
 /// 3.5 FT_GetDeviceInfoDetail
-pub fn get_device_info_detail() -> Result<(), FtError> {
-    Ok(())
+pub fn get_device_info_detail(device_index:u32) -> Result<DeviceInfo, FtError> {
+
+    let mut flags: u32 = 0;
+    let mut ft_type: u32 = 0;
+    let mut id: u32 = 0;
+    let mut locid: u32 = 0;
+    let mut serial_number: [i8; 16] = [0; 16];
+    let mut description: [i8; 64] = [0; 64];
+    let mut ft_handle: FT_HANDLE = std::ptr::null_mut();
+
+    let p_serial_number: *mut c_void = serial_number.as_mut_ptr().cast();
+    let p_description: *mut c_void = description.as_mut_ptr().cast();
+
+    ft_try!(FT_GetDeviceInfoDetail(device_index, &mut flags, &mut ft_type, &mut id, &mut locid, p_serial_number, p_description, &mut ft_handle));
+
+    let ft_device_info = FT_DEVICE_LIST_INFO_NODE{
+        Flags: flags,
+        Type: ft_type,
+        ID: id,
+        LocId: locid,
+        SerialNumber: serial_number,
+        Description: description,
+        ftHandle: ft_handle,
+    };
+
+    let device_info = DeviceInfo::new(ft_device_info);
+
+    Ok((device_info))
 }
 
 /// 3.6 FT_ListDevices
