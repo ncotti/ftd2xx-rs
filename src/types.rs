@@ -77,10 +77,3 @@ fn i8_array_to_string(buf: &[i8]) -> String {
 
     String::from_utf8_lossy(&bytes).into_owned()
 }
-
-#[repr(u32)]
-pub enum OpenBy {
-    SerialNumber = 1,
-    Description = 2,
-    Location = 4,
-}

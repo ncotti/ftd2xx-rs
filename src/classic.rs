@@ -151,3 +151,18 @@ pub fn open_ex_by_location(location_id: u32) -> Result<FT_HANDLE, FtError> {
     ));
     Ok(ft_handle)
 }
+
+/// 3.9 FT_Close
+pub fn close(ft_handle: FT_HANDLE) -> Result<(), FtError> {
+    ft_try!(FT_Close(ft_handle));
+    Ok(())
+}
+
+/// 3.10 FT_Read
+pub fn read(ft_handle: FT_HANDLE, bytes_to_read:u32) -> Result<Vec<u8>, FtError> {
+    let mut bytes_read: u32 = 0;
+    let mut bytes: Vec<u8> = Vec::new();
+    bytes.reserve_exact(bytes_to_read as usize);
+    ft_try!(FT_Read(ft_handle, bytes.as_mut_ptr().cast(), bytes_to_read, &mut bytes_read));
+    Ok(bytes)
+}
