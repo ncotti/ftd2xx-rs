@@ -2,7 +2,7 @@
 
 use crate::device_type::DeviceType;
 use ftd2xx_sys::*;
-use std::fmt;
+use std::{ffi::c_char, fmt};
 
 /// Holds the current library version, as v.<major>.<minor>.<build>
 #[derive(Debug, Copy, Clone)]
@@ -48,7 +48,7 @@ pub struct DeviceInfo {
 
     usb_location_id: u32,
 
-    serial_number: [i8; 16],
+    serial_number: [c_char; 16],
     description: String,
 
     handle: FT_HANDLE,
@@ -73,10 +73,14 @@ impl DeviceInfo {
 fn i8_array_to_string(buf: &[i8]) -> String {
     let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
 
-    let bytes: Vec<u8> = buf[..len]
-        .iter()
-        .map(|&b| b as u8)
-        .collect();
+    let bytes: Vec<u8> = buf[..len].iter().map(|&b| b as u8).collect();
 
     String::from_utf8_lossy(&bytes).into_owned()
+}
+
+#[repr(u32)]
+pub enum OpenBy {
+    SerialNumber = 1,
+    Description = 2,
+    Location = 4,
 }

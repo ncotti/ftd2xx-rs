@@ -2,7 +2,8 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    DeviceType, fterror::{FtError, ft_try}, types::DeviceInfo,
+    fterror::{FtError, ft_try},
+    types::DeviceInfo,
 };
 use ftd2xx_sys::*;
 
@@ -63,8 +64,7 @@ pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DeviceInfo>, F
 }
 
 /// 3.5 FT_GetDeviceInfoDetail
-pub fn get_device_info_detail(device_index:u32) -> Result<DeviceInfo, FtError> {
-
+pub fn get_device_info_detail(device_index: u32) -> Result<DeviceInfo, FtError> {
     let mut flags: u32 = 0;
     let mut ft_type: u32 = 0;
     let mut id: u32 = 0;
@@ -76,9 +76,18 @@ pub fn get_device_info_detail(device_index:u32) -> Result<DeviceInfo, FtError> {
     let p_serial_number: *mut c_void = serial_number.as_mut_ptr().cast();
     let p_description: *mut c_void = description.as_mut_ptr().cast();
 
-    ft_try!(FT_GetDeviceInfoDetail(device_index, &mut flags, &mut ft_type, &mut id, &mut locid, p_serial_number, p_description, &mut ft_handle));
+    ft_try!(FT_GetDeviceInfoDetail(
+        device_index,
+        &mut flags,
+        &mut ft_type,
+        &mut id,
+        &mut locid,
+        p_serial_number,
+        p_description,
+        &mut ft_handle
+    ));
 
-    let ft_device_info = FT_DEVICE_LIST_INFO_NODE{
+    let ft_device_info = FT_DEVICE_LIST_INFO_NODE {
         Flags: flags,
         Type: ft_type,
         ID: id,
@@ -90,10 +99,55 @@ pub fn get_device_info_detail(device_index:u32) -> Result<DeviceInfo, FtError> {
 
     let device_info = DeviceInfo::new(ft_device_info);
 
-    Ok((device_info))
+    Ok(device_info)
 }
 
-/// 3.6 FT_ListDevices
+/// TODO 3.6 FT_ListDevices TODO
 pub fn list_devices() -> Result<(), FtError> {
     Ok(())
+}
+
+/// 3.7 FT_Open
+pub fn open(device_index: u32) -> Result<FT_HANDLE, FtError> {
+    let mut ft_handle: FT_HANDLE = std::ptr::null_mut();
+    ft_try!(FT_Open(device_index as i32, &mut ft_handle));
+    Ok(ft_handle)
+}
+
+/// 3.8 FT_OpenEx, with flag FT_OPEN_BY_SERIAL_NUMBER
+pub fn open_ex_by_serial_number(serial_number: [i8; 16]) -> Result<FT_HANDLE, FtError> {
+    let mut ft_handle: FT_HANDLE = std::ptr::null_mut();
+    let mut serial_number = serial_number;
+    let p_serial_number: *mut c_void = serial_number.as_mut_ptr().cast();
+    ft_try!(FT_OpenEx(
+        p_serial_number,
+        FT_OPEN_BY_SERIAL_NUMBER,
+        &mut ft_handle
+    ));
+    Ok(ft_handle)
+}
+
+/// 3.8 FT_OpenEx, with flag FT_OPEN_BY_DESCRIPTION
+pub fn open_ex_by_description(description: &str) -> Result<FT_HANDLE, FtError> {
+    let mut ft_handle: FT_HANDLE = std::ptr::null_mut();
+    let p_description: *mut c_void = description.as_ptr() as *mut c_void;
+    ft_try!(FT_OpenEx(
+        p_description,
+        FT_OPEN_BY_DESCRIPTION,
+        &mut ft_handle
+    ));
+    Ok(ft_handle)
+}
+
+/// 3.8 FT_OpenEx, with flag FT_OPEN_BY_LOCATION
+pub fn open_ex_by_location(location_id: u32) -> Result<FT_HANDLE, FtError> {
+    let mut ft_handle: FT_HANDLE = std::ptr::null_mut();
+    let mut location_id = location_id;
+    let p_location_id: *mut c_void = (&mut location_id as *mut u32).cast();
+    ft_try!(FT_OpenEx(
+        p_location_id,
+        FT_OPEN_BY_LOCATION,
+        &mut ft_handle
+    ));
+    Ok(ft_handle)
 }
