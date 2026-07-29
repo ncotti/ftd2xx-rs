@@ -77,3 +77,38 @@ fn i8_array_to_string(buf: &[i8]) -> String {
 
     String::from_utf8_lossy(&bytes).into_owned()
 }
+
+#[repr(u8)]
+pub enum Parity {
+    None = 0,
+    Odd = 1,
+    Even = 2,
+    Mark = 3,
+    Space = 4,
+}
+
+#[repr(u8)]
+pub enum BitsPerWord {
+    Bits7 = 7,
+    Bits8 = 8,
+}
+
+#[repr(u8)]
+pub enum StopBits {
+    StopBits1 = 0,
+    StopBits2 = 2,
+}
+
+pub struct UartInfo {
+    pub parity: Parity,
+    pub bits: BitsPerWord,
+    pub stop_bits: StopBits,
+}
+
+#[repr(u16)]
+pub enum FlowControl {
+    None = FT_FLOW_NONE as u16,
+    RtsCts = FT_FLOW_RTS_CTS as u16,
+    DtrDsr = FT_FLOW_DTR_DSR as u16,
+    XonXoff = FT_FLOW_XON_XOFF as u16,
+}
