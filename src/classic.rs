@@ -9,6 +9,7 @@ use ftd2xx_sys::*;
 use std::ffi::c_void;
 
 /// 3.1 FT_SetVIDPID
+#[cfg(not(target_os = "windows"))]
 pub fn set_vid_pid(vid: u16, pid: u16) -> Result<(), FtError> {
     let vid: u32 = vid.into();
     let pid: u32 = pid.into();
@@ -17,6 +18,7 @@ pub fn set_vid_pid(vid: u16, pid: u16) -> Result<(), FtError> {
 }
 
 /// 3.2 FT_GetVIDPID
+#[cfg(not(target_os = "windows"))]
 pub fn get_vid_pid() -> Result<(u16, u16), FtError> {
     let mut vid: u32 = 0;
     let mut pid: u32 = 0;
@@ -26,10 +28,10 @@ pub fn get_vid_pid() -> Result<(u16, u16), FtError> {
     Ok((vid, pid))
 }
 /// 3.3 FT_CreateDeviceInfoList
-pub fn create_device_info_list(number_of_devices: u32) -> Result<(), FtError> {
-    let mut number_of_devices: u32 = number_of_devices;
+pub fn create_device_info_list() -> Result<u32, FtError> {
+    let mut number_of_devices: u32 = 0;
     ft_try!(FT_CreateDeviceInfoList(&mut number_of_devices));
-    Ok(())
+    Ok(number_of_devices)
 }
 
 /// 3.4 FT_GetDeviceInfoList
@@ -101,10 +103,7 @@ pub fn get_device_info_detail(device_index: u32) -> Result<DeviceInfo, FtError> 
     Ok(device_info)
 }
 
-/// TODO 3.6 FT_ListDevices TODO
-pub fn list_devices() -> Result<(), FtError> {
-    Ok(())
-}
+// 3.6 FT_ListDevices is not implemented, use 3.4 or 3.5 instead.
 
 /// 3.7 FT_Open
 pub fn open(device_index: u32) -> Result<FT_HANDLE, FtError> {
@@ -235,7 +234,7 @@ pub fn get_modem_status(ft_handle: FT_HANDLE) -> Result<u32, FtError> {
     Ok(modem_status)
 }
 
-// Note, 3.22 and 3.23 are Windows only and therefore not included
+// Note, 3.22 and 3.23 are not supported. Use 3.21 instead.
 
 /// 3.24 FT_GetQueueStatus
 pub fn get_queue_status(ft_handle: FT_HANDLE) -> Result<u32, FtError> {
@@ -286,6 +285,7 @@ pub fn get_library_version() -> Result<Version, FtError> {
 }
 
 /// 3.28 FT_GetComPortNumber
+#[cfg(target_os = "windows")]
 pub fn get_com_port_number(ft_handle: FT_HANDLE) -> Result<u32, FtError> {
     let mut com_port: u32 = 0;
     ft_try!(FT_GetComPortNumber(ft_handle, &mut com_port));
@@ -343,30 +343,35 @@ pub fn reset_device(ft_handle: FT_HANDLE) -> Result<(), FtError> {
 }
 
 /// 3.36 FT_ResetPort
+#[cfg(target_os = "windows")]
 pub fn reset_port(ft_handle: FT_HANDLE) -> Result<(), FtError> {
     ft_try!(FT_ResetPort(ft_handle));
     Ok(())
 }
 
 /// 3.37 FT_CyclePort
+#[cfg(target_os = "windows")]
 pub fn cycle_port(ft_handle: FT_HANDLE) -> Result<(), FtError> {
     ft_try!(FT_CyclePort(ft_handle));
     Ok(())
 }
 
 /// 3.38 FT_Rescan
+#[cfg(target_os = "windows")]
 pub fn rescan() -> Result<(), FtError> {
     ft_try!(FT_Rescan());
     Ok(())
 }
 
 /// 3.39 FT_Reload
+#[cfg(target_os = "windows")]
 pub fn reload(vid: u16, pid: u16) -> Result<(), FtError> {
     ft_try!(FT_Reload(vid, pid));
     Ok(())
 }
 
 /// 3.40 FT_SetResetPipeRetryCount
+#[cfg(target_os = "windows")]
 pub fn set_reset_pipe_retry_count(ft_handle: FT_HANDLE, retry_count: u32) -> Result<(), FtError> {
     ft_try!(FT_SetResetPipeRetryCount(ft_handle, retry_count));
     Ok(())

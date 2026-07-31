@@ -12,9 +12,10 @@ fn main() {
     let (vid, pid) = get_vid_pid().unwrap();
     println!("{}, {}", vid, pid);
 
-    create_device_info_list(5).unwrap();
-    let device_list = get_device_info_list(5).unwrap();
+    let device_number = create_device_info_list().unwrap();
+    let device_list = get_device_info_list(device_number).unwrap();
 
+    println!("Devices connected: {device_number}");
     println!("{:?}", device_list);
 
     let some_device = get_device_info_detail(2).unwrap();

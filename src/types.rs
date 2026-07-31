@@ -34,24 +34,24 @@ impl fmt::Display for Version {
 #[derive(Debug)]
 pub struct DeviceInfo {
     /// If "true", the device's port is open.
-    open: bool,
+    pub open: bool,
 
     /// If "true", the device is enumerated as a high-speed USB device (480 Mb/s),
     /// if "false", is a full-speed USB device (12 Mb/s).
-    high_speed_usb: bool,
+    pub high_speed_usb: bool,
 
     /// Device type.
-    dev_type: DeviceType,
+    pub dev_type: DeviceType,
 
-    vid: u16,
-    pid: u16,
+    pub vid: u16,
+    pub pid: u16,
 
-    usb_location_id: u32,
+    pub usb_location_id: u32,
 
-    serial_number: [c_char; 16],
-    description: String,
+    pub serial_number: [c_char; 16],
+    pub description: String,
 
-    handle: FT_HANDLE,
+    pub handle: FT_HANDLE,
 }
 
 impl DeviceInfo {
