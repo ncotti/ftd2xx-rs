@@ -20,4 +20,10 @@ fn main() {
     let some_device = get_device_info_detail(2).unwrap();
 
     println!("{:?}", some_device);
+
+    let handle = open(0).unwrap();
+
+    let eeprom = ee_read(handle).unwrap();
+
+    println!("{:?}", eeprom);
 }
