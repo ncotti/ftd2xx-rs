@@ -2,7 +2,9 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    Version, types::{FtError, DevInfo, ft_try}, my_type::{BitMode, EventCause, FlowControl, MyProgramData, UartInfo, FtHandle}
+    Version,
+    my_type::{BitMode, EventCause, FlowControl, FtHandle, MyProgramData, UartInfo},
+    types::{DevInfo, FtError, ft_try},
 };
 use ftd2xx_sys::*;
 
@@ -59,7 +61,10 @@ pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DevInfo>, FtEr
 
     println!("{:?}", ft_devices_info[0].SerialNumber.as_ptr());
 
-    println!("Serial number: {:?}, Description: {:?}", ft_devices_info[0].SerialNumber, ft_devices_info[0].Description);
+    println!(
+        "Serial number: {:?}, Description: {:?}",
+        ft_devices_info[0].SerialNumber, ft_devices_info[0].Description
+    );
 
     let mut devices_info: Vec<DevInfo> = Vec::new();
 
@@ -163,11 +168,16 @@ pub fn close(ft_handle: FtHandle) -> Result<(), FtError> {
 }
 
 /// 3.10 FT_Read
-pub fn read(ft_handle: FtHandle, bytes_to_read:u32) -> Result<Vec<u8>, FtError> {
+pub fn read(ft_handle: FtHandle, bytes_to_read: u32) -> Result<Vec<u8>, FtError> {
     let mut bytes_read: u32 = 0;
     let mut bytes: Vec<u8> = Vec::new();
     bytes.reserve_exact(bytes_to_read as usize);
-    ft_try!(FT_Read(ft_handle, bytes.as_mut_ptr().cast(), bytes_to_read, &mut bytes_read));
+    ft_try!(FT_Read(
+        ft_handle,
+        bytes.as_mut_ptr().cast(),
+        bytes_to_read,
+        &mut bytes_read
+    ));
     Ok(bytes)
 }
 
@@ -175,12 +185,17 @@ pub fn read(ft_handle: FtHandle, bytes_to_read:u32) -> Result<Vec<u8>, FtError> 
 pub fn write(ft_handle: FtHandle, data: &mut Vec<u8>) -> Result<u32, FtError> {
     let mut bytes_written: u32 = 0;
     let bytes_to_be_written: u32 = data.len() as u32;
-    ft_try!(FT_Write(ft_handle, data.as_mut_ptr().cast(), bytes_to_be_written, &mut bytes_written));
+    ft_try!(FT_Write(
+        ft_handle,
+        data.as_mut_ptr().cast(),
+        bytes_to_be_written,
+        &mut bytes_written
+    ));
     Ok(bytes_written)
 }
 
 /// 3.12 FT_SetBaudRate
-pub fn set_baud_rate(ft_handle: FtHandle, baud_rate:u32) -> Result<(), FtError> {
+pub fn set_baud_rate(ft_handle: FtHandle, baud_rate: u32) -> Result<(), FtError> {
     ft_try!(FT_SetBaudRate(ft_handle, baud_rate));
     Ok(())
 }
@@ -193,19 +208,38 @@ pub fn set_divisor(ft_handle: FtHandle, divisor: u16) -> Result<(), FtError> {
 
 /// 3.14 FT_SetDataCharacteristics
 pub fn set_data_characteristics(ft_handle: FtHandle, uart_info: UartInfo) -> Result<(), FtError> {
-    ft_try!(FT_SetDataCharacteristics(ft_handle, uart_info.bits as u8, uart_info.stop_bits as u8, uart_info.parity as u8));
+    ft_try!(FT_SetDataCharacteristics(
+        ft_handle,
+        uart_info.bits as u8,
+        uart_info.stop_bits as u8,
+        uart_info.parity as u8
+    ));
     Ok(())
 }
 
 /// 3.15 FT_SetTimeouts
-pub fn set_timeouts(ft_handle: FtHandle, read_timeout: u32, write_timeout: u32) -> Result<(), FtError> {
+pub fn set_timeouts(
+    ft_handle: FtHandle,
+    read_timeout: u32,
+    write_timeout: u32,
+) -> Result<(), FtError> {
     ft_try!(FT_SetTimeouts(ft_handle, read_timeout, write_timeout));
     Ok(())
 }
 
 /// 3.16 FT_SetFlowControl
-pub fn set_flow_control(ft_handle: FtHandle, flow_control: FlowControl, xon_char: u8, xoff_char: u8) -> Result<(), FtError> {
-    ft_try!(FT_SetFlowControl(ft_handle, flow_control as u16, xon_char, xoff_char));
+pub fn set_flow_control(
+    ft_handle: FtHandle,
+    flow_control: FlowControl,
+    xon_char: u8,
+    xoff_char: u8,
+) -> Result<(), FtError> {
+    ft_try!(FT_SetFlowControl(
+        ft_handle,
+        flow_control as u16,
+        xon_char,
+        xoff_char
+    ));
     Ok(())
 }
 
@@ -235,7 +269,7 @@ pub fn clr_rts(ft_handle: FtHandle) -> Result<(), FtError> {
 
 /// 3.21 FT_GetModemStatus
 pub fn get_modem_status(ft_handle: FtHandle) -> Result<u32, FtError> {
-    let mut modem_status:u32 = 0;
+    let mut modem_status: u32 = 0;
     ft_try!(FT_GetModemStatus(ft_handle, &mut modem_status));
     Ok(modem_status)
 }
@@ -251,7 +285,6 @@ pub fn get_queue_status(ft_handle: FtHandle) -> Result<u32, FtError> {
 
 /// 3.25 FT_GetDeviceInfo
 pub fn get_device_info(ft_handle: FtHandle) -> Result<DevInfo, FtError> {
-
     let flags: u32 = 0;
     let mut ft_type: u32 = 0;
     let mut id: u32 = 0;
@@ -260,7 +293,14 @@ pub fn get_device_info(ft_handle: FtHandle) -> Result<DevInfo, FtError> {
     let mut description: [i8; 64] = [0; 64];
     let dummy_void_ptr: FtHandle = std::ptr::null_mut();
 
-    ft_try!(FT_GetDeviceInfo(ft_handle, &mut ft_type, &mut id, serial_number.as_mut_ptr(), description.as_mut_ptr(), dummy_void_ptr));
+    ft_try!(FT_GetDeviceInfo(
+        ft_handle,
+        &mut ft_type,
+        &mut id,
+        serial_number.as_mut_ptr(),
+        description.as_mut_ptr(),
+        dummy_void_ptr
+    ));
 
     let ft_device_info = FT_DEVICE_LIST_INFO_NODE {
         Flags: flags,
@@ -303,23 +343,48 @@ pub fn get_status(ft_handle: FtHandle) -> Result<(u32, u32, u32), FtError> {
     let mut bytes_in_rx_queue: u32 = 0;
     let mut bytes_in_tx_queue: u32 = 0;
     let mut status: u32 = 0;
-    ft_try!(FT_GetStatus(ft_handle, &mut bytes_in_rx_queue, &mut bytes_in_tx_queue, &mut status));
+    ft_try!(FT_GetStatus(
+        ft_handle,
+        &mut bytes_in_rx_queue,
+        &mut bytes_in_tx_queue,
+        &mut status
+    ));
     Ok((bytes_in_rx_queue, bytes_in_tx_queue, status))
 }
 
 /// 3.30 FT_SetEventNotification
-pub fn set_event_notification(ft_handle: FtHandle, event_cause: EventCause, event_handle: &mut EVENT_HANDLE) -> Result<(), FtError> {
-    let event_cause = (event_cause.rx_char as u32) << 0 &
-        (event_cause.modem_status as u32) << 1 &
-        (event_cause.line_status as u32) << 2;
+pub fn set_event_notification(
+    ft_handle: FtHandle,
+    event_cause: EventCause,
+    event_handle: &mut EVENT_HANDLE,
+) -> Result<(), FtError> {
+    let event_cause = (event_cause.rx_char as u32) << 0
+        & (event_cause.modem_status as u32) << 1
+        & (event_cause.line_status as u32) << 2;
 
-    ft_try!(FT_SetEventNotification(ft_handle, event_cause, (event_handle as *mut EVENT_HANDLE).cast()));
+    ft_try!(FT_SetEventNotification(
+        ft_handle,
+        event_cause,
+        (event_handle as *mut EVENT_HANDLE).cast()
+    ));
     Ok(())
 }
 
 /// 3.31 FT_SetChars
-pub fn set_chars(ft_handle: FtHandle, event_char:u8, error_char:u8, event_en:bool, error_en:bool) -> Result<(), FtError> {
-    ft_try!(FT_SetChars(ft_handle, event_char, event_en as u8, error_char, error_en as u8));
+pub fn set_chars(
+    ft_handle: FtHandle,
+    event_char: u8,
+    error_char: u8,
+    event_en: bool,
+    error_en: bool,
+) -> Result<(), FtError> {
+    ft_try!(FT_SetChars(
+        ft_handle,
+        event_char,
+        event_en as u8,
+        error_char,
+        error_en as u8
+    ));
     Ok(())
 }
 
@@ -403,13 +468,13 @@ pub fn set_deadman_timeout(ft_handle: FtHandle, timeout: u32) -> Result<(), FtEr
 
 /// 4.1 FT_ReadEE
 pub fn read_ee(ft_handle: FtHandle, offset: u32) -> Result<u16, FtError> {
-    let mut value:u16 = 0;
+    let mut value: u16 = 0;
     ft_try!(FT_ReadEE(ft_handle, offset, &mut value));
     Ok(value)
 }
 
 /// 4.2 FT_WriteEE
-pub fn write_ee(ft_handle: FtHandle, offset:u32, value:u16) -> Result<(), FtError> {
+pub fn write_ee(ft_handle: FtHandle, offset: u32, value: u16) -> Result<(), FtError> {
     ft_try!(FT_WriteEE(ft_handle, offset, value));
     Ok(())
 }
@@ -446,8 +511,13 @@ pub fn ee_ua_read(ft_handle: FtHandle) -> Result<Vec<u8>, FtError> {
     let mut bytes_read: u32 = 0;
     let mut bytes: Vec<u8> = Vec::new();
     bytes.reserve_exact(1024);
-    ft_try!(FT_EE_UARead(ft_handle, bytes.as_mut_ptr(), 1024, &mut bytes_read));
-    unsafe {bytes.set_len(bytes_read as usize) };
+    ft_try!(FT_EE_UARead(
+        ft_handle,
+        bytes.as_mut_ptr(),
+        1024,
+        &mut bytes_read
+    ));
+    unsafe { bytes.set_len(bytes_read as usize) };
     Ok(bytes)
 }
 
@@ -468,10 +538,6 @@ pub fn eeprom_program(_ft_handle: FtHandle) -> Result<(), FtError> {
     Ok(())
 }
 
-
-
-
-
 /// 5.1 FT_SetLatencyTimer
 pub fn set_latency_timer(ft_handle: FtHandle, timer: u8) -> Result<(), FtError> {
     ft_try!(FT_SetLatencyTimer(ft_handle, timer));
@@ -486,21 +552,29 @@ pub fn get_latency_timer(ft_handle: FtHandle) -> Result<u8, FtError> {
 }
 
 /// 5.3 FT_SetBitMode
-pub fn set_bit_mode(ft_handle: FtHandle, mask:u8, bit_mode: BitMode) -> Result<(), FtError> {
+pub fn set_bit_mode(ft_handle: FtHandle, mask: u8, bit_mode: BitMode) -> Result<(), FtError> {
     ft_try!(FT_SetBitMode(ft_handle, mask, bit_mode as u8));
     Ok(())
 }
 
 /// 5.4 FT_GetBitMode
 pub fn get_bit_mode(ft_handle: FtHandle) -> Result<u8, FtError> {
-    let mut bit_mode :u8 = 0;
+    let mut bit_mode: u8 = 0;
     ft_try!(FT_GetBitMode(ft_handle, &mut bit_mode));
     // TODO BitMode::from(u8)
     Ok(bit_mode)
 }
 
 /// 5.5 FT_SetUSBParameters
-pub fn set_usb_parameters(ft_handle: FtHandle, in_transfer_size:u32, out_transfer_size:u32) -> Result<(), FtError> {
-    ft_try!(FT_SetUSBParameters(ft_handle, in_transfer_size, out_transfer_size));
+pub fn set_usb_parameters(
+    ft_handle: FtHandle,
+    in_transfer_size: u32,
+    out_transfer_size: u32,
+) -> Result<(), FtError> {
+    ft_try!(FT_SetUSBParameters(
+        ft_handle,
+        in_transfer_size,
+        out_transfer_size
+    ));
     Ok(())
 }

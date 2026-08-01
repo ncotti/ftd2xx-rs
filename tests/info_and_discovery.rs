@@ -1,12 +1,12 @@
 //! This file tests
-//! 
-//! 
-use std::io::{self, Write};
+//!
+//!
 use ftd2xx_rs::classic::get_library_version;
-use ftd2xx_rs::{FtError, classic};
-use ftd2xx_rs::types::*;
 use ftd2xx_rs::device_type::*;
+use ftd2xx_rs::types::*;
+use ftd2xx_rs::{FtError, classic};
 use regex::Regex;
+use std::io::{self, Write};
 
 fn press_button_to_continue(message: &str) {
     println!("{}", message);

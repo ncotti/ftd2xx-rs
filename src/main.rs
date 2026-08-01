@@ -1,5 +1,5 @@
-use ftd2xx_rs::*;
 use ftd2xx_rs::scan;
+use ftd2xx_rs::*;
 
 fn main() {
     let version: Version = get_library_version().unwrap();

@@ -5,7 +5,6 @@ use std::{fmt, ptr::null_mut};
 
 pub type FtHandle = FT_HANDLE;
 
-
 /// Holds the current library version, as v.<major>.<minor>.<build>
 #[derive(Debug, Copy, Clone)]
 pub struct Version {
@@ -32,8 +31,6 @@ impl fmt::Display for Version {
         write!(f, "v{}.{}.{}", self.major, self.minor, self.build)
     }
 }
-
-
 
 #[repr(u8)]
 pub enum Parity {
@@ -116,7 +113,6 @@ pub struct MyProgramData {
     pub description: Box<[u8; 64]>,
     pub serial_number: Box<[u8; 64]>,
 }
-
 
 impl MyProgramData {
     pub fn set_manufacturer(&mut self, input: &str) {
@@ -308,7 +304,7 @@ impl MyProgramData {
                 FT1248FlowControlH: 0,
                 IsVCPH: 0,
                 PowerSaveEnableH: 0,
-            }
+            },
         };
 
         data.program_data.Manufacturer = data.manufacturer.as_mut_ptr() as *mut i8;

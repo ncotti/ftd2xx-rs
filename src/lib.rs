@@ -1,12 +1,11 @@
 #![warn(missing_docs)]
 
 //! Crate doc
-//! 
+//!
 
-
-pub mod types;
 pub mod classic;
 pub mod my_type;
+pub mod types;
 
 pub use classic::*;
 pub use my_type::Version;
@@ -28,12 +27,10 @@ pub use types::{DevInfo, FtError};
 /// }
 /// ```
 pub fn scan() -> Result<Vec<DevInfo>, FtError> {
-
     let device_qtty = classic::create_device_info_list()?;
 
     let device_infos: Vec<DevInfo> = if device_qtty > 0 {
         classic::get_device_info_list(device_qtty)?
-
     } else {
         Vec::new()
     };
@@ -58,14 +55,9 @@ pub fn scan_custom(vid: u16, pid: u16) -> Result<Vec<DevInfo>, FtError> {
     scan()
 }
 
-
-
 // pub struct Device {
 //     handle: FtHandle,
 //     info: bool,
 //     eeprom: bool,
 //     version: Version,
 // }
-
-
-
