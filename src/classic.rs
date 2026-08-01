@@ -3,7 +3,8 @@
 
 use crate::{
     Version,
-    my_type::{BitMode, EventCause, FlowControl, FtHandle, MyProgramData, UartInfo},
+    FtHandle,
+    my_type::{BitMode, EventCause, FlowControl, MyProgramData, UartInfo},
     types::{DevInfo, FtError, ft_try},
 };
 use ftd2xx_sys::*;

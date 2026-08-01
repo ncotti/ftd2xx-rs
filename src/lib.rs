@@ -7,6 +7,9 @@ pub mod classic;
 pub mod my_type;
 pub mod types;
 
+/// FtHandle is a void* FT_HANDLE. It is used to manage any FT device.
+pub type FtHandle = ftd2xx_sys::FT_HANDLE;
+
 pub use classic::*;
 pub use my_type::Version;
 
@@ -20,6 +23,7 @@ pub use types::{DevInfo, FtError};
 /// Example:
 /// ```
 /// use ftd2xx_rs::scan;
+/// use ftd2xx_rs::DevInfo;
 ///
 /// let device_infos: Vec<DevInfo> = scan();
 /// for info in device_infos {
@@ -55,9 +59,88 @@ pub fn scan_custom(vid: u16, pid: u16) -> Result<Vec<DevInfo>, FtError> {
     scan()
 }
 
-// pub struct Device {
-//     handle: FtHandle,
-//     info: bool,
-//     eeprom: bool,
-//     version: Version,
-// }
+/// Generic device
+pub struct Device {
+    /// FT Device info
+    pub info: DevInfo,
+
+    /// FTD2XX library version.
+    pub version: Version,
+
+    /// FT Device handle
+    handle: FtHandle,
+}
+
+impl TryFrom<u32> for Device {
+    type Error = FtError;
+
+    /// Open a device using an `u32` value. It will be interpreted at first
+    /// as an index, and, it doesn't work, as an USB location index.
+    fn try_from(value: u32) -> Result<Self, FtError> {
+        let infos = scan()?;
+
+        if infos.len() == 0 {
+            return Err(FtError::DeviceNotFound)
+        }
+
+        let info = if value < infos.len() as u32 {
+            infos.into_iter().nth(value as usize)
+        } else {
+            infos.into_iter().find(|info| info.usb_location_id == value)
+        };
+
+        if info.is_none() {
+            return Err(FtError::DeviceNotFound)
+        }
+
+        Self::try_from(info.unwrap())
+    }
+}
+
+impl TryFrom<&str> for Device {
+    type Error = FtError;
+
+    /// Open a device using the description. The device description must match
+    /// exactly.
+    fn try_from(description: &str) -> Result<Self, FtError> {
+        let infos = scan()?;
+
+        if infos.len() == 0 {
+            return Err(FtError::DeviceNotFound)
+        }
+
+        let info = infos.into_iter().find(|info| info.description == description);
+
+        if info.is_none() {
+            return Err(FtError::DeviceNotFound)
+        }
+
+        Self::try_from(info.unwrap())
+    }
+}
+
+impl TryFrom<DevInfo> for Device {
+    type Error = FtError;
+
+    /// Open a device using the `DevInfo` obtained from a previous `scan()`.
+    fn try_from(info: DevInfo) -> Result<Self, FtError> {
+        let version = classic::get_library_version()?;
+
+        let handle = classic::open_ex_by_location(info.usb_location_id)?;
+
+        let dev = Self {
+            info: info,
+            version: version,
+            handle: handle
+        };
+
+        Ok(dev)
+    }
+}
+
+/// Close FT Handle on destructor.
+impl Drop for Device {
+    fn drop(&mut self) {
+        unsafe{classic::close(self.handle).unwrap_err_unchecked()};
+    }
+}

@@ -3,8 +3,6 @@
 use ftd2xx_sys::*;
 use std::{fmt, ptr::null_mut};
 
-pub type FtHandle = FT_HANDLE;
-
 /// Holds the current library version, as v.<major>.<minor>.<build>
 #[derive(Debug, Copy, Clone)]
 pub struct Version {

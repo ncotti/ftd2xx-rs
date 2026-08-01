@@ -1,6 +1,11 @@
-pub mod dev_info;
-pub mod dev_type;
-pub mod fterror;
+//! # Types module.
+//!
+//! It re-import all relevant types from the `types` folder to be used by the
+//! user and in other parts of the library.
+
+mod dev_info;
+mod dev_type;
+mod fterror;
 
 pub use dev_info::DevInfo;
 pub use dev_type::DevType;

@@ -8,30 +8,30 @@ use std::fmt;
 #[derive(Debug)]
 pub struct DevInfo {
     /// If "true", the device's port is open.
-    open: bool,
+    pub open: bool,
 
     /// If "true", the device is enumerated as a high-speed USB device (480 Mb/s),
     /// if "false", is a full-speed USB device (12 Mb/s).
-    high_speed_usb: bool,
+    pub high_speed_usb: bool,
 
     /// Device type.
-    dev_type: DevType,
+    pub dev_type: DevType,
 
     /// Vendor ID.
-    vid: u16,
+    pub vid: u16,
 
     /// Product ID.
-    pid: u16,
+    pub pid: u16,
 
-    /// USB location ID.
-    usb_location_id: u32,
+    /// USB location ID. It is a way to uniquely identify a device.
+    pub usb_location_id: u32,
 
     /// Device's serial number, as stored in the EEPROM. This string will be
     /// empty, unless the `SerNumEnableX` flag in the EEPROM is set to `true`.
-    serial_number: String,
+    pub serial_number: String,
 
     /// Device's description, as stored in the EEPROM.
-    description: String,
+    pub description: String,
 }
 
 impl DevInfo {
