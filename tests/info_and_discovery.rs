@@ -2,6 +2,7 @@
 //! 
 //! 
 use std::io::{self, Write};
+use ftd2xx_rs::classic::get_library_version;
 use ftd2xx_rs::{FtError, classic};
 use ftd2xx_rs::types::*;
 use ftd2xx_rs::device_type::*;
@@ -36,5 +37,14 @@ fn scanning_an_ft4232h() -> Result<(), FtError> {
     for device in devices {
         assert!(device.dev_type == DeviceType::Dev4232H);
     }
+    Ok(())
+}
+
+#[test]
+fn library_version() -> Result<(), FtError> {
+    let version = classic::get_library_version().unwrap();
+    assert!(version.major == 1);
+    assert!(version.minor == 4);
+    assert!(version.build >= 35);
     Ok(())
 }

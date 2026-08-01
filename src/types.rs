@@ -2,14 +2,16 @@
 
 use crate::device_type::DeviceType;
 use ftd2xx_sys::*;
-use std::{ffi::c_char, fmt};
+use std::{ffi::c_char, fmt, ptr::{null, null_mut}};
+
+pub type FtHandle = FT_HANDLE;
 
 /// Holds the current library version, as v.<major>.<minor>.<build>
 #[derive(Debug, Copy, Clone)]
 pub struct Version {
-    major: u8,
-    minor: u8,
-    build: u8,
+    pub major: u8,
+    pub minor: u8,
+    pub build: u8,
 }
 
 impl Version {
@@ -51,7 +53,7 @@ pub struct DeviceInfo {
     pub serial_number: [c_char; 16],
     pub description: String,
 
-    pub handle: FT_HANDLE,
+    pub handle: FtHandle,
 }
 
 impl DeviceInfo {
@@ -153,13 +155,66 @@ pub struct EepromFT4232HChannel {
 
 #[derive(Debug)]
 pub struct MyProgramData {
-    pub program_data: FT_PROGRAM_DATA
+    pub program_data: FT_PROGRAM_DATA,
+    pub manufacturer: Box<[u8; 64]>,
+    pub manufacturer_id: Box<[u8; 64]>,
+    pub description: Box<[u8; 64]>,
+    pub serial_number: Box<[u8; 64]>,
 }
 
 
 impl MyProgramData {
+    pub fn set_manufacturer(&mut self, input: &str) {
+        self.manufacturer = Box::new([0; 64]);
+
+        let bytes = input.as_bytes();
+        let len = bytes.len().min(self.manufacturer.len());
+
+        self.manufacturer[..len].copy_from_slice(&bytes[..len]);
+
+        self.program_data.Manufacturer = self.manufacturer.as_mut_ptr() as *mut i8;
+    }
+
+    pub fn set_manufacturer_id(&mut self, input: &str) {
+        self.manufacturer_id = Box::new([0; 64]);
+
+        let bytes = input.as_bytes();
+        let len = bytes.len().min(self.manufacturer.len());
+
+        self.manufacturer_id[..len].copy_from_slice(&bytes[..len]);
+
+        self.program_data.ManufacturerId = self.manufacturer_id.as_mut_ptr() as *mut i8;
+    }
+
+    pub fn set_description(&mut self, input: &str) {
+        self.description = Box::new([0; 64]);
+
+        let bytes = input.as_bytes();
+        let len = bytes.len().min(self.description.len());
+
+        self.description[..len].copy_from_slice(&bytes[..len]);
+
+        self.program_data.Description = self.description.as_mut_ptr() as *mut i8;
+    }
+
+    pub fn set_serial_number(&mut self, input: &str) {
+        self.serial_number = Box::new([0; 64]);
+
+        let bytes = input.as_bytes();
+        let len = bytes.len().min(self.serial_number.len());
+
+        self.serial_number[..len].copy_from_slice(&bytes[..len]);
+
+        self.program_data.SerialNumber = self.serial_number.as_mut_ptr() as *mut i8;
+    }
+
     pub fn new_default() -> Self {
-        MyProgramData {
+        let mut data = MyProgramData {
+            manufacturer: Box::new([0; 64]),
+            manufacturer_id: Box::new([0; 64]),
+            description: Box::new([0; 64]),
+            serial_number: Box::new([0; 64]),
+
             program_data: FT_PROGRAM_DATA {
                 // Common
                 Signature1: 0x00000000,
@@ -167,10 +222,10 @@ impl MyProgramData {
                 Version: 4,
                 VendorId: 0,
                 ProductId: 0,
-                Manufacturer: [0; 64].as_mut_ptr(),
-                ManufacturerId: [0; 64].as_mut_ptr(),
-                Description: [0; 64].as_mut_ptr(),
-                SerialNumber: [0; 64].as_mut_ptr(),
+                Manufacturer: null_mut(),
+                ManufacturerId: null_mut(),
+                Description: null_mut(),
+                SerialNumber: null_mut(),
                 MaxPower: 0,
                 PnP: 0,
                 SelfPowered: 0,
@@ -299,7 +354,14 @@ impl MyProgramData {
                 IsVCPH: 0,
                 PowerSaveEnableH: 0,
             }
-        }
+        };
+
+        data.program_data.Manufacturer = data.manufacturer.as_mut_ptr() as *mut i8;
+        data.program_data.ManufacturerId = data.manufacturer_id.as_mut_ptr() as *mut i8;
+        data.program_data.Description = data.description.as_mut_ptr() as *mut i8;
+        data.program_data.SerialNumber = data.serial_number.as_mut_ptr() as *mut i8;
+
+        data
     }
 }
 

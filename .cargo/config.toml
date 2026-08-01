@@ -1,0 +1,4 @@
+[env]
+# Run on a single thread to avoid multiple tests accessing the device at the
+# same time
+RUST_TEST_THREADS = "1"
