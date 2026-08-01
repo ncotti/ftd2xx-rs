@@ -79,7 +79,7 @@ impl TryFrom<u32> for Device {
         let infos = scan()?;
 
         if infos.len() == 0 {
-            return Err(FtError::DeviceNotFound)
+            return Err(FtError::DeviceNotFound);
         }
 
         let info = if value < infos.len() as u32 {
@@ -89,7 +89,7 @@ impl TryFrom<u32> for Device {
         };
 
         if info.is_none() {
-            return Err(FtError::DeviceNotFound)
+            return Err(FtError::DeviceNotFound);
         }
 
         Self::try_from(info.unwrap())
@@ -105,13 +105,15 @@ impl TryFrom<&str> for Device {
         let infos = scan()?;
 
         if infos.len() == 0 {
-            return Err(FtError::DeviceNotFound)
+            return Err(FtError::DeviceNotFound);
         }
 
-        let info = infos.into_iter().find(|info| info.description == description);
+        let info = infos
+            .into_iter()
+            .find(|info| info.description == description);
 
         if info.is_none() {
-            return Err(FtError::DeviceNotFound)
+            return Err(FtError::DeviceNotFound);
         }
 
         Self::try_from(info.unwrap())
@@ -130,7 +132,7 @@ impl TryFrom<DevInfo> for Device {
         let dev = Self {
             info: info,
             version: version,
-            handle: handle
+            handle: handle,
         };
 
         Ok(dev)
@@ -140,6 +142,6 @@ impl TryFrom<DevInfo> for Device {
 /// Close FT Handle on destructor.
 impl Drop for Device {
     fn drop(&mut self) {
-        unsafe{classic::close(self.handle).unwrap_err_unchecked()};
+        unsafe { classic::close(self.handle).unwrap_err_unchecked() };
     }
 }

@@ -29,3 +29,16 @@ impl fmt::Display for Version {
         write!(f, "v{}.{}.{}", self.major, self.minor, self.build)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_version_conversion() {
+        let version_number: u32 = 0x030115;
+        let version = Version::new(version_number);
+        assert!(version.major == 03);
+        assert!(version.minor == 01);
+        assert!(version.build == 15);
+    }
+}

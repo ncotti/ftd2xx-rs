@@ -3,8 +3,6 @@
 use ftd2xx_sys::*;
 use std::ptr::null_mut;
 
-
-
 #[repr(u8)]
 pub enum Parity {
     None = 0,

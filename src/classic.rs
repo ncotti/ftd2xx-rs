@@ -4,7 +4,7 @@
 use crate::{
     FtHandle,
     my_type::{BitMode, EventCause, FlowControl, MyProgramData, UartInfo},
-    types::{DevInfo, FtError, ft_try, Version},
+    types::{DevInfo, FtError, Version, ft_try},
 };
 use ftd2xx_sys::*;
 
