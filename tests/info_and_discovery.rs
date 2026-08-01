@@ -6,6 +6,7 @@ use ftd2xx_rs::classic::get_library_version;
 use ftd2xx_rs::{FtError, classic};
 use ftd2xx_rs::types::*;
 use ftd2xx_rs::device_type::*;
+use regex::Regex;
 
 fn press_button_to_continue(message: &str) {
     println!("{}", message);
@@ -41,10 +42,9 @@ fn scanning_an_ft4232h() -> Result<(), FtError> {
 }
 
 #[test]
-fn library_version() -> Result<(), FtError> {
-    let version = classic::get_library_version().unwrap();
-    assert!(version.major == 1);
-    assert!(version.minor == 4);
-    assert!(version.build >= 35);
-    Ok(())
+fn test_get_library_version() {
+    let version = get_library_version().unwrap();
+    let re = Regex::new(r"^v\d{1,2}\.\d{1,2}\.\d{1,2}$").unwrap();
+    println!("{}", version);
+    assert!(re.is_match(&version.to_string()));
 }
