@@ -1,4 +1,5 @@
-//! Ft error doc
+//! FT errors. These error codes match the `FT_STATUS` return values from
+//! the FTD2XX library functions.
 
 use ftd2xx_sys::*;
 use std::convert::TryFrom;
