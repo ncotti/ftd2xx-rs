@@ -1,9 +1,9 @@
-//! Ft device type doc
+//! FT Device type enumeration.
 
 use ftd2xx_sys::*;
 use std::convert::From;
 
-/// Device type
+/// FT device types
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq)]
 #[repr(u8)]
