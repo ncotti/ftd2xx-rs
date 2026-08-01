@@ -1,4 +1,5 @@
 use ftd2xx_rs::*;
+use ftd2xx_rs::scan;
 
 fn main() {
     let version: Version = get_library_version().unwrap();
@@ -16,7 +17,7 @@ fn main() {
     let device_list = get_device_info_list(device_number).unwrap();
 
     println!("Devices connected: {device_number}");
-    println!("{:?}", device_list);
+    println!("{:?}", device_list[0]);
 
     let some_device = get_device_info_detail(2).unwrap();
 
@@ -27,4 +28,9 @@ fn main() {
     let eeprom = ee_read(handle).unwrap();
 
     println!("{:?}", eeprom);
+
+    let device_infos: Vec<DevInfo> = scan().unwrap();
+    for info in device_infos {
+        println!("{}", info)
+    }
 }

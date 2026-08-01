@@ -2,7 +2,7 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    Version, fterror::{FtError, ft_try}, types::{BitMode, DeviceInfo, EventCause, FlowControl, MyProgramData, UartInfo, FtHandle},
+    Version, types::{FtError, DevInfo, ft_try}, my_type::{BitMode, EventCause, FlowControl, MyProgramData, UartInfo, FtHandle}
 };
 use ftd2xx_sys::*;
 
@@ -35,7 +35,7 @@ pub fn create_device_info_list() -> Result<u32, FtError> {
 }
 
 /// 3.4 FT_GetDeviceInfoList
-pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DeviceInfo>, FtError> {
+pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DevInfo>, FtError> {
     let mut number_of_devices: u32 = number_of_devices;
     let mut ft_devices_info: Vec<FT_DEVICE_LIST_INFO_NODE> = vec![
         FT_DEVICE_LIST_INFO_NODE {
@@ -50,22 +50,28 @@ pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DeviceInfo>, F
         usize::try_from(number_of_devices)
             .unwrap()
     ];
+
+    println!("{:?}", ft_devices_info[0].SerialNumber.as_ptr());
     ft_try!(FT_GetDeviceInfoList(
         ft_devices_info.as_mut_ptr(),
         &mut number_of_devices
     ));
 
-    let mut devices_info: Vec<DeviceInfo> = Vec::new();
+    println!("{:?}", ft_devices_info[0].SerialNumber.as_ptr());
+
+    println!("Serial number: {:?}, Description: {:?}", ft_devices_info[0].SerialNumber, ft_devices_info[0].Description);
+
+    let mut devices_info: Vec<DevInfo> = Vec::new();
 
     for dev in ft_devices_info {
-        devices_info.push(DeviceInfo::new(dev));
+        devices_info.push(DevInfo::new(dev));
     }
 
     Ok(devices_info)
 }
 
 /// 3.5 FT_GetDeviceInfoDetail
-pub fn get_device_info_detail(device_index: u32) -> Result<DeviceInfo, FtError> {
+pub fn get_device_info_detail(device_index: u32) -> Result<DevInfo, FtError> {
     let mut flags: u32 = 0;
     let mut ft_type: u32 = 0;
     let mut id: u32 = 0;
@@ -98,7 +104,7 @@ pub fn get_device_info_detail(device_index: u32) -> Result<DeviceInfo, FtError> 
         ftHandle: ft_handle,
     };
 
-    let device_info = DeviceInfo::new(ft_device_info);
+    let device_info = DevInfo::new(ft_device_info);
 
     Ok(device_info)
 }
@@ -244,7 +250,7 @@ pub fn get_queue_status(ft_handle: FtHandle) -> Result<u32, FtError> {
 }
 
 /// 3.25 FT_GetDeviceInfo
-pub fn get_device_info(ft_handle: FtHandle) -> Result<DeviceInfo, FtError> {
+pub fn get_device_info(ft_handle: FtHandle) -> Result<DevInfo, FtError> {
 
     let flags: u32 = 0;
     let mut ft_type: u32 = 0;
@@ -266,7 +272,7 @@ pub fn get_device_info(ft_handle: FtHandle) -> Result<DeviceInfo, FtError> {
         ftHandle: ft_handle,
     };
 
-    let device_info = DeviceInfo::new(ft_device_info);
+    let device_info = DevInfo::new(ft_device_info);
     Ok(device_info)
 }
 
@@ -423,7 +429,7 @@ pub fn ee_read(ft_handle: FtHandle) -> Result<MyProgramData, FtError> {
 }
 
 /// 4.6 & 4.7 FT_EE_Program
-pub fn ee_program(ft_handle: FtHandle, mut program_data: &mut MyProgramData) -> Result<(), FtError> {
+pub fn ee_program(ft_handle: FtHandle, program_data: &mut MyProgramData) -> Result<(), FtError> {
     ft_try!(FT_EE_Program(ft_handle, &mut program_data.program_data));
     Ok(())
 }

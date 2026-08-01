@@ -7,7 +7,7 @@ use std::convert::From;
 #[allow(missing_docs)]
 #[derive(Debug, PartialEq)]
 #[repr(u8)]
-pub enum DeviceType {
+pub enum DevType {
     DevBM = FT_DEVICE_BM as u8,
     DevAM = FT_DEVICE_AM as u8,
     Dev100AX = FT_DEVICE_100AX as u8,
@@ -35,35 +35,35 @@ pub enum DeviceType {
     Dev4232HA = FT_DEVICE_4232HA as u8,
 }
 
-impl From<u8> for DeviceType {
+impl From<u8> for DevType {
     fn from(device: u8) -> Self {
         match device {
-            0 => DeviceType::DevBM,
-            1 => DeviceType::DevAM,
-            2 => DeviceType::Dev100AX,
-            3 => DeviceType::DevUnknown,
-            4 => DeviceType::Dev2232C,
-            5 => DeviceType::Dev232R,
-            6 => DeviceType::Dev2232H,
-            7 => DeviceType::Dev4232H,
-            8 => DeviceType::Dev232H,
-            9 => DeviceType::DevXSeries,
-            10 => DeviceType::Dev4222H0,
-            11 => DeviceType::Dev4222H12,
-            12 => DeviceType::Dev4222H3,
-            13 => DeviceType::Dev4222Prog,
-            14 => DeviceType::Dev900,
-            15 => DeviceType::Dev930,
-            16 => DeviceType::DevUMFTPD3A,
-            17 => DeviceType::Dev2233HP,
-            18 => DeviceType::Dev4233HP,
-            19 => DeviceType::Dev2232HP,
-            20 => DeviceType::Dev4232HP,
-            21 => DeviceType::Dev233HP,
-            22 => DeviceType::Dev232HP,
-            23 => DeviceType::Dev2232HA,
-            24 => DeviceType::Dev4232HA,
-            _ => DeviceType::DevUnknown,
+            0 => DevType::DevBM,
+            1 => DevType::DevAM,
+            2 => DevType::Dev100AX,
+            3 => DevType::DevUnknown,
+            4 => DevType::Dev2232C,
+            5 => DevType::Dev232R,
+            6 => DevType::Dev2232H,
+            7 => DevType::Dev4232H,
+            8 => DevType::Dev232H,
+            9 => DevType::DevXSeries,
+            10 => DevType::Dev4222H0,
+            11 => DevType::Dev4222H12,
+            12 => DevType::Dev4222H3,
+            13 => DevType::Dev4222Prog,
+            14 => DevType::Dev900,
+            15 => DevType::Dev930,
+            16 => DevType::DevUMFTPD3A,
+            17 => DevType::Dev2233HP,
+            18 => DevType::Dev4233HP,
+            19 => DevType::Dev2232HP,
+            20 => DevType::Dev4232HP,
+            21 => DevType::Dev233HP,
+            22 => DevType::Dev232HP,
+            23 => DevType::Dev2232HA,
+            24 => DevType::Dev4232HA,
+            _ => DevType::DevUnknown,
         }
     }
 }
