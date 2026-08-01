@@ -11,9 +11,8 @@ pub mod types;
 pub type FtHandle = ftd2xx_sys::FT_HANDLE;
 
 pub use classic::*;
-pub use my_type::Version;
 
-pub use types::{DevInfo, FtError};
+pub use types::{DevInfo, FtError, Version};
 
 /// Scans all currently connected devices, and returns a list with their
 /// information. By default, only devices with VID=0x0403 and

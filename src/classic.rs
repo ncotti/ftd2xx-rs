@@ -2,10 +2,9 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    Version,
     FtHandle,
     my_type::{BitMode, EventCause, FlowControl, MyProgramData, UartInfo},
-    types::{DevInfo, FtError, ft_try},
+    types::{DevInfo, FtError, ft_try, Version},
 };
 use ftd2xx_sys::*;
 
