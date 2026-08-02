@@ -8,39 +8,47 @@ use ftd2xx_sys::{
     FT_EEPROM_PD_PDO_mv_ma, FT_EEPROM_X_SERIES,
 };
 
+/// Common EEPROM header used for all devices
 pub struct EepromHeader {
-    /// Device type.
-    pub device_type: DevType,
-    // Vendor ID.
+    /// Device type. This field is nor read or written to the EEPROM, but
+    /// rather used by the FTD2XX library to know which EEPROM layout is
+    /// handling.
+    device_type: DevType,
+
+    /// Vendor ID.
     pub vid: u16,
     /// Product ID.
     pub pid: u16,
 
-    /// If `true`, the serial number will be announced when the USB device is
+    /// If `true`, the `serial_number`` will be announced when the USB device is
     /// connected, and can be retrieved from the `scan()` function.
-    /// If `false`, won't be visible.
+    /// If `false`, it won't be visible.
     pub serial_number_enable: bool,
 
-    /// Max power [0;500]
-    /// TODO, check, actual power: 2mA * value, this is current. 0 if self_powered
+    /// Max power drawn from the USB interface. Valid values are: [0;500]
+    /// TODO, check, actual power: 2mA * value, this is current.
     pub max_power: u16,
 
-    /// TODO
+    /// If `true`, the device will be "self_powered", meaning that it won't
+    /// draw any current from the USB interface, but rather use its own
+    /// external power source. When set to `true`, the `max_power` should be
+    /// set to 0mA.
     pub self_powered: bool,
 
-    /// TODO
+    /// Enable remote wake-up. TODO
     pub remote_wakeup: bool,
 
-    /// TODO
+    /// If `true`, the device's IO pins will be connected to an internal
+    /// pulldown resistor when the in USB suspend mode.
     pub pulldown_enable: bool,
 
-    /// Manufacturer.
+    /// Manufacturer string.
     pub manufacturer: String,
-    /// Manufacturer ID.
+    /// Manufacturer ID string..
     pub manufacturer_id: String,
-    /// Description.
+    /// Short description string.
     pub description: String,
-    /// Serial number.
+    /// Serial number string.
     pub serial_number: String,
 }
 
@@ -59,7 +67,9 @@ impl From<EepromHeader> for FT_EEPROM_HEADER {
     }
 }
 
+/// EEPROM configuration for an FT232B device.
 pub struct EepromFt232b {
+    /// EEPROM common configuration
     common: EepromHeader,
 }
 
@@ -71,9 +81,13 @@ impl From<EepromFt232b> for FT_EEPROM_232B {
     }
 }
 
+/// EEPROM configuration for an FT2232 device.
 pub struct EepromFt2232 {
+    /// EEPROM common configuration
     pub common: EepromHeader,
+    /// Channel A configuration
     pub cha: EepromFt2232Channel,
+    /// Channel B configuration
     pub chb: EepromFt2232Channel,
 }
 
@@ -108,6 +122,8 @@ impl From<EepromFt2232> for FT_EEPROM_2232 {
     }
 }
 
+/// EEPROM configuration for an FT232R device.
+#[allow(missing_docs)]
 pub struct EepromFt232r {
     pub common: EepromHeader,
     pub is_high_current: bool,
@@ -147,6 +163,8 @@ impl From<EepromFt232r> for FT_EEPROM_232R {
     }
 }
 
+/// EEPROM configuration for an FT2232H device.
+#[allow(missing_docs)]
 pub struct EepromFt2232h {
     pub common: EepromHeader,
     pub cha: EepromFt2232hChannel,
@@ -154,6 +172,8 @@ pub struct EepromFt2232h {
     pub power_save_enable: bool,
 }
 
+/// FT2232H EEPROM configuration for each of the device's channels (A and B)
+#[allow(missing_docs)]
 pub struct EepromFt2232hChannel {
     pub low_slow_slew: bool,
     pub low_schmitt_input: bool,
@@ -195,6 +215,8 @@ impl From<EepromFt2232h> for FT_EEPROM_2232H {
     }
 }
 
+/// EEPROM configuration for an FT4232H device.
+#[allow(missing_docs)]
 pub struct EepromFt4232h {
     pub common: EepromHeader,
     pub cha: EepromFt4232hChannel,
@@ -203,6 +225,8 @@ pub struct EepromFt4232h {
     pub chd: EepromFt4232hChannel,
 }
 
+/// FT4232H EEPROM configuration for each of the device's channels
+#[allow(missing_docs)]
 pub struct EepromFt4232hChannel {
     slow_slew: bool,
     schmitt_input: bool,
@@ -238,6 +262,8 @@ impl From<EepromFt4232h> for FT_EEPROM_4232H {
     }
 }
 
+/// EEPROM configuration for an FT232H device.
+#[allow(missing_docs)]
 pub struct EepromFt232h {
     common: EepromHeader,
     ac_slow_slew: bool,
@@ -290,6 +316,8 @@ impl From<EepromFt232h> for FT_EEPROM_232H {
     }
 }
 
+/// EEPROM configuration for an FT_X_Series device.
+#[allow(missing_docs)]
 pub struct EepromFtXSeries {
     common: EepromHeader,
     ac_slow_slew: bool,
@@ -361,6 +389,8 @@ impl From<EepromFtXSeries> for FT_EEPROM_X_SERIES {
     }
 }
 
+/// EEPROM configuration for an FT4222H device.
+#[allow(missing_docs)]
 pub struct EepromFt4222h {
     common: EepromHeader,
     revision: u8,
@@ -387,6 +417,8 @@ pub struct EepromFt4222h {
     bcd_drive: DriveCurrent,
 }
 
+/// EEPROM configuration for each GPIO port in the FT4222 device
+#[allow(missing_docs)]
 pub struct EepromFt4222hGpio {
     pub drive: DriveCurrent,
     pub slow_slew: bool,
@@ -452,8 +484,11 @@ impl From<EepromFt4222h> for FT_EEPROM_4222H {
     }
 }
 
+/// Common Power Delivery Output (PDO) currents and voltages.
 pub struct EepromPDO {
+    /// Voltage delivered from power pins [0;51100]mV
     mv: [u16; 7],
+    /// Current delivered from power pins [0;10230]mA
     ma: [u16; 7],
 }
 
@@ -478,6 +513,9 @@ impl From<EepromPDO> for FT_EEPROM_PD_PDO_mv_ma {
     }
 }
 
+/// Common Power Delivery (PD) configuration. Power delivery devices have a "P"
+/// at the end of their name.
+#[allow(missing_docs)]
 pub struct EepromPD {
     srprs: bool,
     sraprs: bool,
@@ -622,6 +660,8 @@ impl From<EepromPD> for FT_EEPROM_PD {
     }
 }
 
+/// EEPROM configuration for a FT2233HP device.
+#[allow(missing_docs)]
 pub struct EepromFt2233hp {
     ft2232h: EepromFt2232h,
     pd: EepromPD,
@@ -636,6 +676,8 @@ impl From<EepromFt2233hp> for FT_EEPROM_2233HP {
     }
 }
 
+/// EEPROM configuration for a FT4233HP device.
+#[allow(missing_docs)]
 pub struct EepromFt4233hp {
     ft4232h: EepromFt4232h,
     pd: EepromPD,
@@ -650,6 +692,8 @@ impl From<EepromFt4233hp> for FT_EEPROM_4233HP {
     }
 }
 
+/// EEPROM configuration for a FT2232HP device.
+#[allow(missing_docs)]
 pub struct EepromFt2232hp {
     ft2232h: EepromFt2232h,
     pd: EepromPD,
@@ -664,6 +708,8 @@ impl From<EepromFt2232hp> for FT_EEPROM_2232HP {
     }
 }
 
+/// EEPROM configuration for a FT4232HP device.
+#[allow(missing_docs)]
 pub struct EepromFt4232hp {
     ft4232h: EepromFt4232h,
     pd: EepromPD,
@@ -678,6 +724,8 @@ impl From<EepromFt4232hp> for FT_EEPROM_4232HP {
     }
 }
 
+/// EEPROM configuration for a FT233HP device.
+#[allow(missing_docs)]
 pub struct EepromFt233hp {
     ft232h: EepromFt232h,
     pd: EepromPD,
@@ -692,6 +740,8 @@ impl From<EepromFt233hp> for FT_EEPROM_233HP {
     }
 }
 
+/// EEPROM configuration for a FT232HP device.
+#[allow(missing_docs)]
 pub struct EepromFt232hp {
     ft232h: EepromFt232h,
     pd: EepromPD,
@@ -706,8 +756,11 @@ impl From<EepromFt232hp> for FT_EEPROM_232HP {
     }
 }
 
+/// Drive current of each I/O pin, i.e., the maximum allowed current for each
+/// pin to source/sink, in mA.
 #[derive(Debug, Copy, Clone)]
 #[repr(u8)]
+#[allow(missing_docs)]
 pub enum DriveCurrent {
     Current4mA = 4,
     Current8mA = 8,
