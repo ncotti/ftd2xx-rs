@@ -10,99 +10,106 @@ use ftd2xx_sys::{
 
 pub struct EepromHeader {
     /// Device type.
-    device_type: DevType,
+    pub device_type: DevType,
     // Vendor ID.
-    vid: u16,
+    pub vid: u16,
     /// Product ID.
-    pid: u16,
+    pub pid: u16,
 
-    serial_number_enable: bool,
+    /// If `true`, the serial number will be announced when the USB device is
+    /// connected, and can be retrieved from the `scan()` function.
+    /// If `false`, won't be visible.
+    pub serial_number_enable: bool,
 
     /// Max power [0;500]
-    max_power: u16,
+    /// TODO, check, actual power: 2mA * value, this is current. 0 if self_powered
+    pub max_power: u16,
 
-    self_powered: bool,
-    remote_wakeup: bool,
-    pulldown_enable: bool,
+    /// TODO
+    pub self_powered: bool,
+
+    /// TODO
+    pub remote_wakeup: bool,
+
+    /// TODO
+    pub pulldown_enable: bool,
 
     /// Manufacturer.
     pub manufacturer: String,
     /// Manufacturer ID.
     pub manufacturer_id: String,
-
     /// Description.
     pub description: String,
-
     /// Serial number.
     pub serial_number: String,
 }
 
-impl EepromHeader {
-    fn to_ft_eeprom_header(&self) -> FT_EEPROM_HEADER {
+impl From<EepromHeader> for FT_EEPROM_HEADER {
+    fn from(t: EepromHeader) -> Self {
         FT_EEPROM_HEADER {
-            deviceType: self.device_type as u32,
-            VendorId: self.vid,
-            ProductId: self.pid,
-            SerNumEnable: self.serial_number_enable as u8,
-            MaxPower: self.max_power,
-            SelfPowered: self.self_powered as u8,
-            RemoteWakeup: self.remote_wakeup as u8,
-            PullDownEnable: self.pulldown_enable as u8,
+            deviceType: t.device_type as u32,
+            VendorId: t.vid,
+            ProductId: t.pid,
+            SerNumEnable: t.serial_number_enable as u8,
+            MaxPower: t.max_power,
+            SelfPowered: t.self_powered as u8,
+            RemoteWakeup: t.remote_wakeup as u8,
+            PullDownEnable: t.pulldown_enable as u8,
         }
     }
 }
 
-pub struct Ft232bEeprom {
-    header: EepromHeader,
+pub struct EepromFt232b {
+    common: EepromHeader,
 }
 
-impl Ft232bEeprom {
-    fn to_ft_eeprom_232b(&self) -> FT_EEPROM_232B {
+impl From<EepromFt232b> for FT_EEPROM_232B {
+    fn from(t: EepromFt232b) -> Self {
         FT_EEPROM_232B {
-            common: self.header.to_ft_eeprom_header(),
+            common: t.common.into(),
         }
     }
 }
 
-pub struct Ft2232Eeprom {
-    pub header: EepromHeader,
-    pub cha: Ft2232EepromChannel,
-    pub chb: Ft2232EepromChannel,
+pub struct EepromFt2232 {
+    pub common: EepromHeader,
+    pub cha: EepromFt2232Channel,
+    pub chb: EepromFt2232Channel,
 }
 
 /// FT2232 EEPROM configuration for each of the device's channels (A and B)
 #[allow(missing_docs)]
-pub struct Ft2232EepromChannel {
+pub struct EepromFt2232Channel {
     pub is_high_current: bool,
     pub is_fifo: bool,
     pub is_fifo_target: bool,
     pub is_fast_serial: bool,
 }
 
-impl Ft2232Eeprom {
-    fn to_ft_eeprom_2232(&self) -> FT_EEPROM_2232 {
+impl From<EepromFt2232> for FT_EEPROM_2232 {
+    fn from(t: EepromFt2232) -> Self {
         FT_EEPROM_2232 {
-            common: self.header.to_ft_eeprom_header(),
+            common: t.common.into(),
 
             // Channel A
-            AIsHighCurrent: self.cha.is_high_current as u8,
-            AIsFifo: self.cha.is_fifo as u8,
-            AIsFifoTar: self.cha.is_fifo_target as u8,
-            AIsFastSer: self.cha.is_fast_serial as u8,
+            AIsHighCurrent: t.cha.is_high_current as u8,
+            AIsFifo: t.cha.is_fifo as u8,
+            AIsFifoTar: t.cha.is_fifo_target as u8,
+            AIsFastSer: t.cha.is_fast_serial as u8,
             ADriverType: false as u8, // D2XX driver
 
             // Channel B
-            BIsHighCurrent: self.chb.is_high_current as u8,
-            BIsFifo: self.chb.is_fifo as u8,
-            BIsFifoTar: self.chb.is_fifo_target as u8,
-            BIsFastSer: self.chb.is_fast_serial as u8,
+            BIsHighCurrent: t.chb.is_high_current as u8,
+            BIsFifo: t.chb.is_fifo as u8,
+            BIsFifoTar: t.chb.is_fifo_target as u8,
+            BIsFastSer: t.chb.is_fast_serial as u8,
             BDriverType: false as u8, // D2XX driver
         }
     }
 }
 
-pub struct Ft232rEeprom {
-    pub header: EepromHeader,
+pub struct EepromFt232r {
+    pub common: EepromHeader,
     pub is_high_current: bool,
     pub use_external_oscillator: bool,
     pub invert_txd: bool,
@@ -113,45 +120,41 @@ pub struct Ft232rEeprom {
     pub invert_dsr: bool,
     pub invert_dcd: bool,
     pub invert_ri: bool,
-    pub cbus0: u8,
-    pub cbus1: u8,
-    pub cbus2: u8,
-    pub cbus3: u8,
-    pub cbus4: u8,
+    pub cbus: [u8; 5],
 }
 
-impl Ft232rEeprom {
-    fn to_ft_eeprom_232r(&self) -> FT_EEPROM_232R {
+impl From<EepromFt232r> for FT_EEPROM_232R {
+    fn from(t: EepromFt232r) -> Self {
         FT_EEPROM_232R {
-            common: self.header.to_ft_eeprom_header(),
-            IsHighCurrent: self.is_high_current as u8,
-            UseExtOsc: self.use_external_oscillator as u8,
-            InvertTXD: self.invert_txd as u8,
-            InvertRXD: self.invert_rxd as u8,
-            InvertRTS: self.invert_rts as u8,
-            InvertCTS: self.invert_cts as u8,
-            InvertDTR: self.invert_dtr as u8,
-            InvertDSR: self.invert_dsr as u8,
-            InvertDCD: self.invert_dcd as u8,
-            InvertRI: self.invert_ri as u8,
-            Cbus0: self.cbus0,
-            Cbus1: self.cbus1,
-            Cbus2: self.cbus2,
-            Cbus3: self.cbus3,
-            Cbus4: self.cbus4,
+            common: t.common.into(),
+            IsHighCurrent: t.is_high_current as u8,
+            UseExtOsc: t.use_external_oscillator as u8,
+            InvertTXD: t.invert_txd as u8,
+            InvertRXD: t.invert_rxd as u8,
+            InvertRTS: t.invert_rts as u8,
+            InvertCTS: t.invert_cts as u8,
+            InvertDTR: t.invert_dtr as u8,
+            InvertDSR: t.invert_dsr as u8,
+            InvertDCD: t.invert_dcd as u8,
+            InvertRI: t.invert_ri as u8,
+            Cbus0: t.cbus[0],
+            Cbus1: t.cbus[1],
+            Cbus2: t.cbus[2],
+            Cbus3: t.cbus[3],
+            Cbus4: t.cbus[4],
             DriverType: true as u8, // D2XX driver
         }
     }
 }
 
-pub struct Ft2232hEeprom {
-    pub header: EepromHeader,
-    pub cha: Ft2232hChannel,
-    pub chb: Ft2232hChannel,
+pub struct EepromFt2232h {
+    pub common: EepromHeader,
+    pub cha: EepromFt2232hChannel,
+    pub chb: EepromFt2232hChannel,
     pub power_save_enable: bool,
 }
 
-pub struct Ft2232hChannel {
+pub struct EepromFt2232hChannel {
     pub low_slow_slew: bool,
     pub low_schmitt_input: bool,
     pub low_drive_current: DriveCurrent,
@@ -163,70 +166,70 @@ pub struct Ft2232hChannel {
     pub is_fast_serial: bool,
 }
 
-impl Ft2232hEeprom {
-    fn to_ft_eeprom_2232h(&self) -> FT_EEPROM_2232H {
+impl From<EepromFt2232h> for FT_EEPROM_2232H {
+    fn from(t: EepromFt2232h) -> Self {
         FT_EEPROM_2232H {
-            common: self.header.to_ft_eeprom_header(),
-            ALSlowSlew: self.cha.low_slow_slew as u8,
-            ALSchmittInput: self.cha.low_schmitt_input as u8,
-            ALDriveCurrent: self.cha.low_drive_current as u8,
-            AHSlowSlew: self.cha.high_slow_slew as u8,
-            AHSchmittInput: self.cha.high_schmitt_input as u8,
-            AHDriveCurrent: self.cha.high_drive_current as u8,
-            BLSlowSlew: self.chb.low_slow_slew as u8,
-            BLSchmittInput: self.chb.low_schmitt_input as u8,
-            BLDriveCurrent: self.chb.low_drive_current as u8,
-            BHSlowSlew: self.chb.high_slow_slew as u8,
-            BHSchmittInput: self.chb.high_schmitt_input as u8,
-            BHDriveCurrent: self.chb.high_drive_current as u8,
-            AIsFifo: self.cha.is_fifo as u8,
-            AIsFifoTar: self.cha.is_fifo_target as u8,
-            AIsFastSer: self.cha.is_fast_serial as u8,
-            BIsFifo: self.chb.is_fifo as u8,
-            BIsFifoTar: self.chb.is_fifo_target as u8,
-            BIsFastSer: self.chb.is_fast_serial as u8,
-            PowerSaveEnable: self.power_save_enable as u8,
+            common: t.common.into(),
+            ALSlowSlew: t.cha.low_slow_slew as u8,
+            ALSchmittInput: t.cha.low_schmitt_input as u8,
+            ALDriveCurrent: t.cha.low_drive_current as u8,
+            AHSlowSlew: t.cha.high_slow_slew as u8,
+            AHSchmittInput: t.cha.high_schmitt_input as u8,
+            AHDriveCurrent: t.cha.high_drive_current as u8,
+            BLSlowSlew: t.chb.low_slow_slew as u8,
+            BLSchmittInput: t.chb.low_schmitt_input as u8,
+            BLDriveCurrent: t.chb.low_drive_current as u8,
+            BHSlowSlew: t.chb.high_slow_slew as u8,
+            BHSchmittInput: t.chb.high_schmitt_input as u8,
+            BHDriveCurrent: t.chb.high_drive_current as u8,
+            AIsFifo: t.cha.is_fifo as u8,
+            AIsFifoTar: t.cha.is_fifo_target as u8,
+            AIsFastSer: t.cha.is_fast_serial as u8,
+            BIsFifo: t.chb.is_fifo as u8,
+            BIsFifoTar: t.chb.is_fifo_target as u8,
+            BIsFastSer: t.chb.is_fast_serial as u8,
+            PowerSaveEnable: t.power_save_enable as u8,
             ADriverType: false as u8, // D2XX driver
             BDriverType: false as u8, // D2XX driver
         }
     }
 }
 
-pub struct Ft4232hEeprom {
-    pub header: EepromHeader,
-    pub cha: Ft4232hChannel,
-    pub chb: Ft4232hChannel,
-    pub chc: Ft4232hChannel,
-    pub chd: Ft4232hChannel,
+pub struct EepromFt4232h {
+    pub common: EepromHeader,
+    pub cha: EepromFt4232hChannel,
+    pub chb: EepromFt4232hChannel,
+    pub chc: EepromFt4232hChannel,
+    pub chd: EepromFt4232hChannel,
 }
 
-pub struct Ft4232hChannel {
+pub struct EepromFt4232hChannel {
     slow_slew: bool,
     schmitt_input: bool,
     drive_current: DriveCurrent,
     use_ri_as_txden: bool,
 }
 
-impl Ft4232hEeprom {
-    fn to_ft_eeprom_4232h(&self) -> FT_EEPROM_4232H {
+impl From<EepromFt4232h> for FT_EEPROM_4232H {
+    fn from(t: EepromFt4232h) -> Self {
         FT_EEPROM_4232H {
-            common: self.header.to_ft_eeprom_header(),
-            ASlowSlew: self.cha.slow_slew as u8,
-            ASchmittInput: self.cha.schmitt_input as u8,
-            ADriveCurrent: self.cha.drive_current as u8,
-            BSlowSlew: self.chb.slow_slew as u8,
-            BSchmittInput: self.chb.schmitt_input as u8,
-            BDriveCurrent: self.chb.drive_current as u8,
-            CSlowSlew: self.chc.slow_slew as u8,
-            CSchmittInput: self.chc.schmitt_input as u8,
-            CDriveCurrent: self.chc.drive_current as u8,
-            DSlowSlew: self.chd.slow_slew as u8,
-            DSchmittInput: self.chd.schmitt_input as u8,
-            DDriveCurrent: self.chd.drive_current as u8,
-            ARIIsTXDEN: self.cha.use_ri_as_txden as u8,
-            BRIIsTXDEN: self.chb.use_ri_as_txden as u8,
-            CRIIsTXDEN: self.chc.use_ri_as_txden as u8,
-            DRIIsTXDEN: self.chd.use_ri_as_txden as u8,
+            common: t.common.into(),
+            ASlowSlew: t.cha.slow_slew as u8,
+            ASchmittInput: t.cha.schmitt_input as u8,
+            ADriveCurrent: t.cha.drive_current as u8,
+            BSlowSlew: t.chb.slow_slew as u8,
+            BSchmittInput: t.chb.schmitt_input as u8,
+            BDriveCurrent: t.chb.drive_current as u8,
+            CSlowSlew: t.chc.slow_slew as u8,
+            CSchmittInput: t.chc.schmitt_input as u8,
+            CDriveCurrent: t.chc.drive_current as u8,
+            DSlowSlew: t.chd.slow_slew as u8,
+            DSchmittInput: t.chd.schmitt_input as u8,
+            DDriveCurrent: t.chd.drive_current as u8,
+            ARIIsTXDEN: t.cha.use_ri_as_txden as u8,
+            BRIIsTXDEN: t.chb.use_ri_as_txden as u8,
+            CRIIsTXDEN: t.chc.use_ri_as_txden as u8,
+            DRIIsTXDEN: t.chd.use_ri_as_txden as u8,
             ADriverType: false as u8,
             BDriverType: false as u8,
             CDriverType: false as u8,
@@ -235,8 +238,8 @@ impl Ft4232hEeprom {
     }
 }
 
-pub struct Ft232hEeprom {
-    header: EepromHeader,
+pub struct EepromFt232h {
+    common: EepromHeader,
     ac_slow_slew: bool,
     ac_schmitt_input: bool,
     ac_drive_current: DriveCurrent,
@@ -254,41 +257,41 @@ pub struct Ft232hEeprom {
     power_save_enable: bool,
 }
 
-impl Ft232hEeprom {
-    fn to_ft_eeprom_232h(&self) -> FT_EEPROM_232H {
+impl From<EepromFt232h> for FT_EEPROM_232H {
+    fn from(t: EepromFt232h) -> Self {
         FT_EEPROM_232H {
-            common: self.header.to_ft_eeprom_header(),
-            ACSlowSlew: self.ac_slow_slew as u8,
-            ACSchmittInput: self.ac_schmitt_input as u8,
-            ACDriveCurrent: self.ac_drive_current as u8,
-            ADSlowSlew: self.ad_slow_slew as u8,
-            ADSchmittInput: self.ad_schmitt_input as u8,
-            ADDriveCurrent: self.ad_drive_current as u8,
-            Cbus0: self.cbus[0],
-            Cbus1: self.cbus[1],
-            Cbus2: self.cbus[2],
-            Cbus3: self.cbus[3],
-            Cbus4: self.cbus[4],
-            Cbus5: self.cbus[5],
-            Cbus6: self.cbus[6],
-            Cbus7: self.cbus[7],
-            Cbus8: self.cbus[8],
-            Cbus9: self.cbus[9],
-            FT1248Cpol: self.ft1248_cpol_high as u8,
-            FT1248Lsb: self.ft1248_lsb as u8,
-            FT1248FlowControl: self.ft1248_flow_control as u8,
-            IsFifo: self.is_fifo as u8,
-            IsFifoTar: self.is_fifo_target as u8,
-            IsFastSer: self.is_fast_serial as u8,
-            IsFT1248: self.is_ft1248 as u8,
-            PowerSaveEnable: self.power_save_enable as u8,
+            common: t.common.into(),
+            ACSlowSlew: t.ac_slow_slew as u8,
+            ACSchmittInput: t.ac_schmitt_input as u8,
+            ACDriveCurrent: t.ac_drive_current as u8,
+            ADSlowSlew: t.ad_slow_slew as u8,
+            ADSchmittInput: t.ad_schmitt_input as u8,
+            ADDriveCurrent: t.ad_drive_current as u8,
+            Cbus0: t.cbus[0],
+            Cbus1: t.cbus[1],
+            Cbus2: t.cbus[2],
+            Cbus3: t.cbus[3],
+            Cbus4: t.cbus[4],
+            Cbus5: t.cbus[5],
+            Cbus6: t.cbus[6],
+            Cbus7: t.cbus[7],
+            Cbus8: t.cbus[8],
+            Cbus9: t.cbus[9],
+            FT1248Cpol: t.ft1248_cpol_high as u8,
+            FT1248Lsb: t.ft1248_lsb as u8,
+            FT1248FlowControl: t.ft1248_flow_control as u8,
+            IsFifo: t.is_fifo as u8,
+            IsFifoTar: t.is_fifo_target as u8,
+            IsFastSer: t.is_fast_serial as u8,
+            IsFT1248: t.is_ft1248 as u8,
+            PowerSaveEnable: t.power_save_enable as u8,
             DriverType: false as u8,
         }
     }
 }
 
-pub struct FtXSeriesEeprom {
-    header: EepromHeader,
+pub struct EepromFtXSeries {
+    common: EepromHeader,
     ac_slow_slew: bool,
     ac_schmitt_input: bool,
     ac_drive_current: DriveCurrent,
@@ -317,49 +320,49 @@ pub struct FtXSeriesEeprom {
     power_save_enable: bool,
 }
 
-impl FtXSeriesEeprom {
-    fn to_ft_eeprom_x_series(&self) -> FT_EEPROM_X_SERIES {
+impl From<EepromFtXSeries> for FT_EEPROM_X_SERIES {
+    fn from(t: EepromFtXSeries) -> Self {
         FT_EEPROM_X_SERIES {
-            common: self.header.to_ft_eeprom_header(),
-            ACSlowSlew: self.ac_slow_slew as u8,
-            ACSchmittInput: self.ac_schmitt_input as u8,
-            ACDriveCurrent: self.ac_drive_current as u8,
-            ADSlowSlew: self.ad_slow_slew as u8,
-            ADSchmittInput: self.ad_schmitt_input as u8,
-            ADDriveCurrent: self.ad_slow_slew as u8,
-            Cbus0: self.cbus[0],
-            Cbus1: self.cbus[1],
-            Cbus2: self.cbus[2],
-            Cbus3: self.cbus[3],
-            Cbus4: self.cbus[4],
-            Cbus5: self.cbus[5],
-            Cbus6: self.cbus[6],
-            InvertTXD: self.invert_txd as u8,
-            InvertRXD: self.invert_rxd as u8,
-            InvertRTS: self.invert_rts as u8,
-            InvertCTS: self.invert_cts as u8,
-            InvertDTR: self.invert_dtr as u8,
-            InvertDSR: self.invert_dsr as u8,
-            InvertDCD: self.invert_dcd as u8,
-            InvertRI: self.invert_ri as u8,
-            BCDEnable: self.bdc_enable as u8,
-            BCDForceCbusPWREN: self.bcd_force_cbus_pwren as u8,
-            BCDDisableSleep: self.bcd_disable_sleep as u8,
-            I2CSlaveAddress: self.i2c_slave_address,
-            I2CDeviceId: self.i2c_device_id,
-            I2CDisableSchmitt: self.i2c_disable_schmitt as u8,
-            FT1248Cpol: self.ft1248_cpol as u8,
-            FT1248Lsb: self.ft1248_lsb as u8,
-            FT1248FlowControl: self.ft1248_flow_control as u8,
-            RS485EchoSuppress: self.rs485_echo_suppress as u8,
-            PowerSaveEnable: self.power_save_enable as u8,
+            common: t.common.into(),
+            ACSlowSlew: t.ac_slow_slew as u8,
+            ACSchmittInput: t.ac_schmitt_input as u8,
+            ACDriveCurrent: t.ac_drive_current as u8,
+            ADSlowSlew: t.ad_slow_slew as u8,
+            ADSchmittInput: t.ad_schmitt_input as u8,
+            ADDriveCurrent: t.ad_slow_slew as u8,
+            Cbus0: t.cbus[0],
+            Cbus1: t.cbus[1],
+            Cbus2: t.cbus[2],
+            Cbus3: t.cbus[3],
+            Cbus4: t.cbus[4],
+            Cbus5: t.cbus[5],
+            Cbus6: t.cbus[6],
+            InvertTXD: t.invert_txd as u8,
+            InvertRXD: t.invert_rxd as u8,
+            InvertRTS: t.invert_rts as u8,
+            InvertCTS: t.invert_cts as u8,
+            InvertDTR: t.invert_dtr as u8,
+            InvertDSR: t.invert_dsr as u8,
+            InvertDCD: t.invert_dcd as u8,
+            InvertRI: t.invert_ri as u8,
+            BCDEnable: t.bdc_enable as u8,
+            BCDForceCbusPWREN: t.bcd_force_cbus_pwren as u8,
+            BCDDisableSleep: t.bcd_disable_sleep as u8,
+            I2CSlaveAddress: t.i2c_slave_address,
+            I2CDeviceId: t.i2c_device_id,
+            I2CDisableSchmitt: t.i2c_disable_schmitt as u8,
+            FT1248Cpol: t.ft1248_cpol as u8,
+            FT1248Lsb: t.ft1248_lsb as u8,
+            FT1248FlowControl: t.ft1248_flow_control as u8,
+            RS485EchoSuppress: t.rs485_echo_suppress as u8,
+            PowerSaveEnable: t.power_save_enable as u8,
             DriverType: false as u8,
         }
     }
 }
 
-pub struct Ft4222hEeprom {
-    header: EepromHeader,
+pub struct EepromFt4222h {
+    common: EepromHeader,
     revision: u8,
     i2c_slave_address: u8,
     spi_suspend: u8,
@@ -377,14 +380,14 @@ pub struct Ft4222hEeprom {
     simo_suspend: u8,
     i02_i03_suspend: u8,
     ss_suspend: u8,
-    gpios: [Ft4222hGPIO; 4],
+    gpios: [EepromFt4222hGpio; 4],
     gpio_falling_edge: bool,
     bcd_disable: bool,
     bcd_output_active_low: bool,
     bcd_drive: DriveCurrent,
 }
 
-pub struct Ft4222hGPIO {
+pub struct EepromFt4222hGpio {
     pub drive: DriveCurrent,
     pub slow_slew: bool,
     pub pulldown: bool,
@@ -393,58 +396,58 @@ pub struct Ft4222hGPIO {
     pub suspend: u8,
 }
 
-impl Ft4222hEeprom {
-    fn to_ft_eeprom_4222h(&self) -> FT_EEPROM_4222H {
+impl From<EepromFt4222h> for FT_EEPROM_4222H {
+    fn from(t: EepromFt4222h) -> Self {
         FT_EEPROM_4222H {
-            common: self.header.to_ft_eeprom_header(),
-            Revision: self.revision as u8,
-            I2C_Slave_Address: self.i2c_slave_address as u8,
-            SPISuspend: self.spi_suspend as u8,
-            SuspendOutPol: self.suspend_out_pol as u8,
-            EnableSuspendOut: self.enable_suspend_out as u8,
-            Clock_SlowSlew: self.clock_slow_slew as u8,
-            Clock_Drive: self.clock_drive as u8,
-            IO0_SlowSlew: self.slow_slew[0] as u8,
-            IO1_SlowSlew: self.slow_slew[1] as u8,
-            IO2_SlowSlew: self.slow_slew[2] as u8,
-            IO3_SlowSlew: self.slow_slew[3] as u8,
-            IO_Drive: self.io_drive as u8,
-            SlaveSelect_PullUp: self.ss_pullup as u8,
-            SlaveSelect_PullDown: self.ss_pulldown as u8,
-            SlaveSelect_Drive: self.ss_drive as u8,
-            SlaveSelect_SlowSlew: self.ss_slow_slew as u8,
-            MISO_Suspend: self.miso_suspend as u8,
-            SIMO_Suspend: self.simo_suspend as u8,
-            IO2_IO3_Suspend: self.i02_i03_suspend as u8,
-            SlaveSelect_Suspend: self.ss_suspend as u8,
-            GPIO0_Drive: self.gpios[0].drive as u8,
-            GPIO1_Drive: self.gpios[1].drive as u8,
-            GPIO2_Drive: self.gpios[2].drive as u8,
-            GPIO3_Drive: self.gpios[3].drive as u8,
-            GPIO0_SlowSlew: self.gpios[0].slow_slew as u8,
-            GPIO1_SlowSlew: self.gpios[1].slow_slew as u8,
-            GPIO2_SlowSlew: self.gpios[2].slow_slew as u8,
-            GPIO3_SlowSlew: self.gpios[3].slow_slew as u8,
-            GPIO0_PullDown: self.gpios[0].pulldown as u8,
-            GPIO1_PullDown: self.gpios[1].pulldown as u8,
-            GPIO2_PullDown: self.gpios[2].pulldown as u8,
-            GPIO3_PullDown: self.gpios[3].pulldown as u8,
-            GPIO0_PullUp: self.gpios[0].pullup as u8,
-            GPIO1_PullUp: self.gpios[1].pullup as u8,
-            GPIO2_PullUp: self.gpios[2].pullup as u8,
-            GPIO3_PullUp: self.gpios[3].pullup as u8,
-            GPIO0_OpenDrain: self.gpios[0].open_drain as u8,
-            GPIO1_OpenDrain: self.gpios[1].open_drain as u8,
-            GPIO2_OpenDrain: self.gpios[2].open_drain as u8,
-            GPIO3_OpenDrain: self.gpios[3].open_drain as u8,
-            GPIO0_Suspend: self.gpios[0].suspend as u8,
-            GPIO1_Suspend: self.gpios[1].suspend as u8,
-            GPIO2_Suspend: self.gpios[2].suspend as u8,
-            GPIO3_Suspend: self.gpios[3].suspend as u8,
-            FallingEdge: self.gpio_falling_edge as u8,
-            BCD_Disable: self.bcd_disable as u8,
-            BCD_OutputActiveLow: self.bcd_output_active_low as u8,
-            BCD_Drive: self.bcd_drive as u8,
+            common: t.common.into(),
+            Revision: t.revision as u8,
+            I2C_Slave_Address: t.i2c_slave_address as u8,
+            SPISuspend: t.spi_suspend as u8,
+            SuspendOutPol: t.suspend_out_pol as u8,
+            EnableSuspendOut: t.enable_suspend_out as u8,
+            Clock_SlowSlew: t.clock_slow_slew as u8,
+            Clock_Drive: t.clock_drive as u8,
+            IO0_SlowSlew: t.slow_slew[0] as u8,
+            IO1_SlowSlew: t.slow_slew[1] as u8,
+            IO2_SlowSlew: t.slow_slew[2] as u8,
+            IO3_SlowSlew: t.slow_slew[3] as u8,
+            IO_Drive: t.io_drive as u8,
+            SlaveSelect_PullUp: t.ss_pullup as u8,
+            SlaveSelect_PullDown: t.ss_pulldown as u8,
+            SlaveSelect_Drive: t.ss_drive as u8,
+            SlaveSelect_SlowSlew: t.ss_slow_slew as u8,
+            MISO_Suspend: t.miso_suspend as u8,
+            SIMO_Suspend: t.simo_suspend as u8,
+            IO2_IO3_Suspend: t.i02_i03_suspend as u8,
+            SlaveSelect_Suspend: t.ss_suspend as u8,
+            GPIO0_Drive: t.gpios[0].drive as u8,
+            GPIO1_Drive: t.gpios[1].drive as u8,
+            GPIO2_Drive: t.gpios[2].drive as u8,
+            GPIO3_Drive: t.gpios[3].drive as u8,
+            GPIO0_SlowSlew: t.gpios[0].slow_slew as u8,
+            GPIO1_SlowSlew: t.gpios[1].slow_slew as u8,
+            GPIO2_SlowSlew: t.gpios[2].slow_slew as u8,
+            GPIO3_SlowSlew: t.gpios[3].slow_slew as u8,
+            GPIO0_PullDown: t.gpios[0].pulldown as u8,
+            GPIO1_PullDown: t.gpios[1].pulldown as u8,
+            GPIO2_PullDown: t.gpios[2].pulldown as u8,
+            GPIO3_PullDown: t.gpios[3].pulldown as u8,
+            GPIO0_PullUp: t.gpios[0].pullup as u8,
+            GPIO1_PullUp: t.gpios[1].pullup as u8,
+            GPIO2_PullUp: t.gpios[2].pullup as u8,
+            GPIO3_PullUp: t.gpios[3].pullup as u8,
+            GPIO0_OpenDrain: t.gpios[0].open_drain as u8,
+            GPIO1_OpenDrain: t.gpios[1].open_drain as u8,
+            GPIO2_OpenDrain: t.gpios[2].open_drain as u8,
+            GPIO3_OpenDrain: t.gpios[3].open_drain as u8,
+            GPIO0_Suspend: t.gpios[0].suspend as u8,
+            GPIO1_Suspend: t.gpios[1].suspend as u8,
+            GPIO2_Suspend: t.gpios[2].suspend as u8,
+            GPIO3_Suspend: t.gpios[3].suspend as u8,
+            FallingEdge: t.gpio_falling_edge as u8,
+            BCD_Disable: t.bcd_disable as u8,
+            BCD_OutputActiveLow: t.bcd_output_active_low as u8,
+            BCD_Drive: t.bcd_drive as u8,
         }
     }
 }
@@ -454,23 +457,23 @@ pub struct EepromPDO {
     ma: [u16; 7],
 }
 
-impl EepromPDO {
-    fn to_ft_eeprom_pdo(&self) -> FT_EEPROM_PD_PDO_mv_ma {
+impl From<EepromPDO> for FT_EEPROM_PD_PDO_mv_ma {
+    fn from(t: EepromPDO) -> Self {
         FT_EEPROM_PD_PDO_mv_ma {
-            PDO1ma: self.ma[0],
-            PDO1mv: self.mv[0],
-            PDO2ma: self.ma[1],
-            PDO2mv: self.mv[1],
-            PDO3ma: self.ma[2],
-            PDO3mv: self.mv[2],
-            PDO4ma: self.ma[3],
-            PDO4mv: self.mv[3],
-            PDO5ma: self.ma[4],
-            PDO5mv: self.mv[4],
-            PDO6ma: self.ma[5],
-            PDO6mv: self.mv[5],
-            PDO7ma: self.ma[6],
-            PDO7mv: self.mv[6],
+            PDO1ma: t.ma[0],
+            PDO1mv: t.mv[0],
+            PDO2ma: t.ma[1],
+            PDO2mv: t.mv[1],
+            PDO3ma: t.ma[2],
+            PDO3mv: t.mv[2],
+            PDO4ma: t.ma[3],
+            PDO4mv: t.mv[3],
+            PDO5ma: t.ma[4],
+            PDO5mv: t.mv[4],
+            PDO6ma: t.ma[5],
+            PDO6mv: t.mv[5],
+            PDO7ma: t.ma[6],
+            PDO7mv: t.mv[6],
         }
     }
 }
@@ -540,165 +543,165 @@ pub struct EepromPD {
     extdc: bool,
 }
 
-impl EepromPD {
-    fn to_eeprom_pd(&self) -> FT_EEPROM_PD {
+impl From<EepromPD> for FT_EEPROM_PD {
+    fn from(t: EepromPD) -> Self {
         FT_EEPROM_PD {
-            srprs: self.srprs as u8,
-            sraprs: self.sraprs as u8,
-            srrprs: self.srrprs as u8,
-            saprs: self.saprs as u8,
-            vconns: self.vconns as u8,
-            passthru: self.passthru as u8,
-            extmcu: self.extmcu as u8,
-            pd2en: self.pd2en as u8,
-            pd1autoclk: self.pd1autoclk as u8,
-            pd2autoclk: self.pd2autoclk as u8,
-            useefuse: self.useefuse as u8,
-            extvconn: self.extvconn as u8,
+            srprs: t.srprs as u8,
+            sraprs: t.sraprs as u8,
+            srrprs: t.srrprs as u8,
+            saprs: t.saprs as u8,
+            vconns: t.vconns as u8,
+            passthru: t.passthru as u8,
+            extmcu: t.extmcu as u8,
+            pd2en: t.pd2en as u8,
+            pd1autoclk: t.pd1autoclk as u8,
+            pd2autoclk: t.pd2autoclk as u8,
+            useefuse: t.useefuse as u8,
+            extvconn: t.extvconn as u8,
 
-            count: self.count,
-            srcPin1: self.src_pin[0],
-            srcPin2: self.src_pin[1],
-            srcPin3: self.src_pin[2],
-            srcPin4: self.src_pin[3],
-            srcPin5: self.src_pin[4],
-            srcPin6: self.src_pin[5],
-            srcPin7: self.src_pin[6],
+            count: t.count,
+            srcPin1: t.src_pin[0],
+            srcPin2: t.src_pin[1],
+            srcPin3: t.src_pin[2],
+            srcPin4: t.src_pin[3],
+            srcPin5: t.src_pin[4],
+            srcPin6: t.src_pin[5],
+            srcPin7: t.src_pin[6],
 
-            pd1lden: self.pd1lden,
-            pd2lden: self.pd2lden,
+            pd1lden: t.pd1lden,
+            pd2lden: t.pd2lden,
 
-            dispin: self.dispin,
-            disenbm: self.disenbm,
-            disdisbm: self.disdisbm,
+            dispin: t.dispin,
+            disenbm: t.disenbm,
+            disdisbm: t.disdisbm,
 
-            ccselect: self.ccselect,
+            ccselect: t.ccselect,
 
-            iset1: self.iset1,
-            iset2: self.iset2,
-            iset3: self.iset3,
+            iset1: t.iset1,
+            iset2: t.iset2,
+            iset3: t.iset3,
 
-            extiset: self.extiset as u8,
-            isetpd2: self.isetpd2 as u8,
-            iseten: self.iseten as u8,
+            extiset: t.extiset as u8,
+            isetpd2: t.isetpd2 as u8,
+            iseten: t.iseten as u8,
 
-            PDO1_GPIO: self.pdo1_gpio,
-            PDO2_GPIO: self.pdo2_gpio,
-            PDO3_GPIO: self.pdo3_gpio,
-            PDO4_GPIO: self.pdo4_gpio,
-            PDO5_GPIO: self.pdo5_gpio,
-            PDO6_GPIO: self.pdo6_gpio,
-            PDO7_GPIO: self.pdo7_gpio,
-            VSET0V_GPIO: self.vset0v_gpio,
-            VSAFE5V_GPIO: self.vsafe5v_gpio,
+            PDO1_GPIO: t.pdo1_gpio,
+            PDO2_GPIO: t.pdo2_gpio,
+            PDO3_GPIO: t.pdo3_gpio,
+            PDO4_GPIO: t.pdo4_gpio,
+            PDO5_GPIO: t.pdo5_gpio,
+            PDO6_GPIO: t.pdo6_gpio,
+            PDO7_GPIO: t.pdo7_gpio,
+            VSET0V_GPIO: t.vset0v_gpio,
+            VSAFE5V_GPIO: t.vsafe5v_gpio,
 
-            BM_PDO_Sink: self.bm_pdo_sink.to_ft_eeprom_pdo(),
-            BM_PDO_Source: self.bm_pdo_source.to_ft_eeprom_pdo(),
-            BM_PDO_Sink_2: self.bm_pdo_sink_2.to_ft_eeprom_pdo(),
+            BM_PDO_Sink: t.bm_pdo_sink.into(),
+            BM_PDO_Source: t.bm_pdo_source.into(),
+            BM_PDO_Sink_2: t.bm_pdo_sink_2.into(),
 
-            srt: self.srt,
-            hrt: self.hrt,
-            sct: self.sct,
-            dit: self.dit,
-            srcrt: self.srcrt,
-            trt: self.trt,
-            sofft: self.sofft,
-            nrt: self.nrt,
-            swct: self.swct,
-            snkrt: self.snkrt,
-            dt: self.dt,
-            cnst: self.cnst,
-            it: self.it,
+            srt: t.srt,
+            hrt: t.hrt,
+            sct: t.sct,
+            dit: t.dit,
+            srcrt: t.srcrt,
+            trt: t.trt,
+            sofft: t.sofft,
+            nrt: t.nrt,
+            swct: t.swct,
+            snkrt: t.snkrt,
+            dt: t.dt,
+            cnst: t.cnst,
+            it: t.it,
 
-            i2caddr: self.i2caddr,
-            prou: self.prou,
-            trim1: self.trim1,
-            trim2: self.trim2,
-            extdc: self.extdc as u8,
+            i2caddr: t.i2caddr,
+            prou: t.prou,
+            trim1: t.trim1,
+            trim2: t.trim2,
+            extdc: t.extdc as u8,
         }
     }
 }
 
-pub struct Ft2233hpEeprom {
-    eeprom: Ft2232hEeprom,
+pub struct EepromFt2233hp {
+    ft2232h: EepromFt2232h,
     pd: EepromPD,
 }
 
-impl Ft2233hpEeprom {
-    fn to_eeprom(&self) -> FT_EEPROM_2233HP {
+impl From<EepromFt2233hp> for FT_EEPROM_2233HP {
+    fn from(t: EepromFt2233hp) -> Self {
         FT_EEPROM_2233HP {
-            ft2232h: self.eeprom.to_ft_eeprom_2232h(),
-            pd: self.pd.to_eeprom_pd(),
+            ft2232h: t.ft2232h.into(),
+            pd: t.pd.into(),
         }
     }
 }
 
-pub struct Ft4233hpEeprom {
-    eeprom: Ft4232hEeprom,
+pub struct EepromFt4233hp {
+    ft4232h: EepromFt4232h,
     pd: EepromPD,
 }
 
-impl Ft4233hpEeprom {
-    fn to_eeprom(&self) -> FT_EEPROM_4233HP {
+impl From<EepromFt4233hp> for FT_EEPROM_4233HP {
+    fn from(t: EepromFt4233hp) -> Self {
         FT_EEPROM_4233HP {
-            ft4232h: self.eeprom.to_ft_eeprom_4232h(),
-            pd: self.pd.to_eeprom_pd(),
+            ft4232h: t.ft4232h.into(),
+            pd: t.pd.into(),
         }
     }
 }
 
-pub struct Ft2232hpEeprom {
-    eeprom: Ft2232hEeprom,
+pub struct EepromFt2232hp {
+    ft2232h: EepromFt2232h,
     pd: EepromPD,
 }
 
-impl Ft2232hpEeprom {
-    fn to_eeprom(&self) -> FT_EEPROM_2232HP {
+impl From<EepromFt2232hp> for FT_EEPROM_2232HP {
+    fn from(t: EepromFt2232hp) -> Self {
         FT_EEPROM_2232HP {
-            ft2232h: self.eeprom.to_ft_eeprom_2232h(),
-            pd: self.pd.to_eeprom_pd(),
+            ft2232h: t.ft2232h.into(),
+            pd: t.pd.into(),
         }
     }
 }
 
-pub struct Ft4232hpEeprom {
-    eeprom: Ft4232hEeprom,
+pub struct EepromFt4232hp {
+    ft4232h: EepromFt4232h,
     pd: EepromPD,
 }
 
-impl Ft4232hpEeprom {
-    fn to_eeprom(&self) -> FT_EEPROM_4232HP {
+impl From<EepromFt4232hp> for FT_EEPROM_4232HP {
+    fn from(t: EepromFt4232hp) -> Self {
         FT_EEPROM_4232HP {
-            ft4232h: self.eeprom.to_ft_eeprom_4232h(),
-            pd: self.pd.to_eeprom_pd(),
+            ft4232h: t.ft4232h.into(),
+            pd: t.pd.into(),
         }
     }
 }
 
-pub struct Ft233hpEeprom {
-    eeprom: Ft232hEeprom,
+pub struct EepromFt233hp {
+    ft232h: EepromFt232h,
     pd: EepromPD,
 }
 
-impl Ft233hpEeprom {
-    fn to_eeprom(&self) -> FT_EEPROM_233HP {
+impl From<EepromFt233hp> for FT_EEPROM_233HP {
+    fn from(t: EepromFt233hp) -> Self {
         FT_EEPROM_233HP {
-            ft232h: self.eeprom.to_ft_eeprom_232h(),
-            pd: self.pd.to_eeprom_pd(),
+            ft232h: t.ft232h.into(),
+            pd: t.pd.into(),
         }
     }
 }
 
-pub struct Ft232hpEeprom {
-    eeprom: Ft232hEeprom,
+pub struct EepromFt232hp {
+    ft232h: EepromFt232h,
     pd: EepromPD,
 }
 
-impl Ft232hpEeprom {
-    fn to_eeprom(&self) -> FT_EEPROM_232HP {
+impl From<EepromFt232hp> for FT_EEPROM_232HP {
+    fn from(t: EepromFt232hp) -> Self {
         FT_EEPROM_232HP {
-            ft232h: self.eeprom.to_ft_eeprom_232h(),
-            pd: self.pd.to_eeprom_pd(),
+            ft232h: t.ft232h.into(),
+            pd: t.pd.into(),
         }
     }
 }
