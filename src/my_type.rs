@@ -44,38 +44,6 @@ pub struct EventCause {
     pub line_status: bool,
 }
 
-pub struct EepromCommon {
-    signature_1: u32,
-    signature_2: u32,
-    version: u32,
-    vid: u16,
-    pid: u16,
-    manufacturer: String,
-    manufacturer_id: String,
-    description: String,
-    serial_number: String,
-    max_power: u16,
-    pnp: bool,
-    self_powered: bool,
-    remote_wakeup: bool,
-}
-
-pub struct EepromFT4232H {
-    common: EepromCommon,
-    enable_pulldown: bool,
-    enable_serial_number: bool,
-    cha: EepromFT4232HChannel,
-    chb: EepromFT4232HChannel,
-    chc: EepromFT4232HChannel,
-    chd: EepromFT4232HChannel,
-}
-
-pub struct EepromFT4232HChannel {
-    slow_slew: bool,
-    schmitt_input: bool,
-    drive_current: u8,
-}
-
 #[derive(Debug)]
 pub struct MyProgramData {
     pub program_data: FT_PROGRAM_DATA,

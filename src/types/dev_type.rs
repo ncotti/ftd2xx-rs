@@ -5,7 +5,7 @@ use std::convert::From;
 
 /// FT device types
 #[allow(missing_docs)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 #[repr(u8)]
 pub enum DevType {
     DevBM = FT_DEVICE_BM as u8,
