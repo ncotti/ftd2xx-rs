@@ -1,8 +1,12 @@
 //! Device information structure
 
 use crate::types::dev_type::DevType;
+use crate::utils::i8_array_to_string;
 use ftd2xx_sys::FT_DEVICE_LIST_INFO_NODE;
 use std::fmt;
+
+pub const FT_DEFAULT_VENDOR_ID: u16 = 0x403;
+pub const FT_DEFAULT_PRODUCT_ID: u16 = 0x6001;
 
 /// FT device information as returned by the `scan()` methods.
 #[derive(Debug)]
@@ -71,11 +75,4 @@ impl fmt::Display for DevInfo {
         writeln!(f, "Status: {}, {}", status, usb_type)?;
         write!(f, "USB Location ID: {:#X}", self.usb_location_id)
     }
-}
-
-/// Converts an [i8] array into a String.
-fn i8_array_to_string(buf: &[i8]) -> String {
-    let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
-    let bytes: Vec<u8> = buf[..len].iter().map(|&b| b as u8).collect();
-    String::from_utf8_lossy(&bytes).into_owned()
 }

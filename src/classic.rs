@@ -2,13 +2,15 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    FtHandle,
-    my_type::{BitMode, EventCause, FlowControl, MyProgramData, UartInfo},
+    Eeprom, FtHandle,
+    my_type::{BitMode, EventCause, FlowControl, UartInfo},
     types::{DevInfo, FtError, Version, ft_try},
 };
 use ftd2xx_sys::*;
 
 use std::ffi::c_void;
+
+use crate::utils::i8_array_to_string;
 
 /// 3.1 FT_SetVIDPID
 #[cfg(not(target_os = "windows"))]
@@ -485,19 +487,9 @@ pub fn erase_ee(ft_handle: FtHandle) -> Result<(), FtError> {
     Ok(())
 }
 
-/// 4.4 && 4.5 FT_EE_Read
-pub fn ee_read(ft_handle: FtHandle) -> Result<MyProgramData, FtError> {
-    let mut program_data = MyProgramData::new_default();
-
-    ft_try!(FT_EE_Read(ft_handle, &mut program_data.program_data));
-    Ok(program_data)
-}
-
-/// 4.6 & 4.7 FT_EE_Program
-pub fn ee_program(ft_handle: FtHandle, program_data: &mut MyProgramData) -> Result<(), FtError> {
-    ft_try!(FT_EE_Program(ft_handle, &mut program_data.program_data));
-    Ok(())
-}
+// 4.4 FT_EE_Read, 4.5 FT_EE_Read, 4.6 FT_EE_Program and 4.7 FT_EE_ProgramEx
+// are not implemented. Use 4.11 FT_EEPROM_Read and 4.12 FT_EEPROM_Program
+// instead.
 
 /// 4.8 FT_EE_UASize
 pub fn ee_ua_size(ft_handle: FtHandle) -> Result<u32, FtError> {
@@ -528,9 +520,39 @@ pub fn ee_ua_write(ft_handle: FtHandle, bytes: &mut Vec<u8>) -> Result<(), FtErr
     Ok(())
 }
 
-/// 4.11 FT_EEPROM_Read TODO
-pub fn eeprom_read(_ft_handle: FtHandle) -> Result<(), FtError> {
-    Ok(())
+/// 4.11 FT_EEPROM_Read
+pub fn eeprom_read<T: Eeprom>(ft_handle: FtHandle) -> Result<T, FtError> {
+    let eeprom: T = T::default();
+    let mut manufacturer: [i8; 64] = [0; 64];
+    let mut manufacturer_id: [i8; 64] = [0; 64];
+    let mut description: [i8; 64] = [0; 64];
+    let mut serial_number: [i8; 64] = [0; 64];
+
+    let p_manufacturer: *mut i8 = manufacturer.as_mut_ptr();
+    let p_manufacturer_id: *mut i8 = manufacturer_id.as_mut_ptr();
+    let p_description: *mut i8 = description.as_mut_ptr();
+    let p_serial_number: *mut i8 = serial_number.as_mut_ptr();
+
+    let mut ft_eeprom: T::FtEeprom = eeprom.into();
+    let p_ft_eeprom: *mut c_void = (&mut ft_eeprom as *mut T::FtEeprom).cast();
+
+    ft_try!(FT_EEPROM_Read(
+        ft_handle,
+        p_ft_eeprom,
+        std::mem::size_of::<T::FtEeprom>() as u32,
+        p_manufacturer,
+        p_manufacturer_id,
+        p_description,
+        p_serial_number
+    ));
+
+    let mut eeprom: T = T::from(ft_eeprom);
+    eeprom.set_manufacturer(i8_array_to_string(&manufacturer));
+    eeprom.set_manufacturer_id(i8_array_to_string(&manufacturer_id));
+    eeprom.set_description(i8_array_to_string(&description));
+    eeprom.set_serial_number(i8_array_to_string(&serial_number));
+
+    Ok(eeprom)
 }
 
 /// 4.12 FT_EEPROM_Program TODO

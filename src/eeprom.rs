@@ -1,6 +1,6 @@
 //! Implementation for reading and writing the EEPROM
 
-use crate::types::DevType;
+use crate::types::{DevType, FT_DEFAULT_PRODUCT_ID, FT_DEFAULT_VENDOR_ID};
 use ftd2xx_sys::{
     FT_EEPROM_232B, FT_EEPROM_232H, FT_EEPROM_232HP, FT_EEPROM_232R, FT_EEPROM_233HP,
     FT_EEPROM_2232, FT_EEPROM_2232H, FT_EEPROM_2232HP, FT_EEPROM_2233HP, FT_EEPROM_4222H,
@@ -8,7 +8,64 @@ use ftd2xx_sys::{
     FT_EEPROM_PD_PDO_mv_ma, FT_EEPROM_X_SERIES,
 };
 
+#[derive(Default, Debug)]
+struct EepromStrings {
+    /// Manufacturer.
+    pub manufacturer: String,
+    /// Manufacturer ID.
+    pub manufacturer_id: String,
+    /// Short description.
+    pub description: String,
+    /// Serial number.
+    pub serial_number: String,
+}
+
+pub trait Eeprom: Sized + Default + From<Self::FtEeprom> {
+    type FtEeprom: for<'a> From<Self>;
+
+    // fn read(ft_handle: FtHandle) -> Result<Self, FtError>;
+    // fn write(&self) -> Result<(), FtError>;
+    // fn erase(&self) -> Result<(), FtError>;
+
+    fn strings(&self) -> &EepromStrings;
+
+    fn string_mut(&mut self) -> &mut EepromStrings;
+
+    fn get_manufacturer(&self) -> &str {
+        &self.strings().manufacturer
+    }
+
+    fn get_manufacturer_id(&self) -> &str {
+        &self.strings().manufacturer_id
+    }
+
+    fn get_description(&self) -> &str {
+        &self.strings().description
+    }
+
+    fn get_serial_number(&self) -> &str {
+        &self.strings().serial_number
+    }
+
+    fn set_manufacturer(&mut self, manufacturer: String) {
+        self.string_mut().manufacturer = manufacturer;
+    }
+
+    fn set_manufacturer_id(&mut self, manufacturer_id: String) {
+        self.string_mut().manufacturer_id = manufacturer_id;
+    }
+
+    fn set_description(&mut self, description: String) {
+        self.string_mut().description = description;
+    }
+
+    fn set_serial_number(&mut self, serial_number: String) {
+        self.string_mut().serial_number = serial_number;
+    }
+}
+
 /// Common EEPROM header used for all devices
+#[derive(Debug)]
 pub struct EepromHeader {
     /// Device type. This field is nor read or written to the EEPROM, but
     /// rather used by the FTD2XX library to know which EEPROM layout is
@@ -41,15 +98,6 @@ pub struct EepromHeader {
     /// If `true`, the device's IO pins will be connected to an internal
     /// pulldown resistor when the in USB suspend mode.
     pub pulldown_enable: bool,
-
-    /// Manufacturer string.
-    pub manufacturer: String,
-    /// Manufacturer ID string..
-    pub manufacturer_id: String,
-    /// Short description string.
-    pub description: String,
-    /// Serial number string.
-    pub serial_number: String,
 }
 
 impl From<EepromHeader> for FT_EEPROM_HEADER {
@@ -63,6 +111,37 @@ impl From<EepromHeader> for FT_EEPROM_HEADER {
             SelfPowered: t.self_powered as u8,
             RemoteWakeup: t.remote_wakeup as u8,
             PullDownEnable: t.pulldown_enable as u8,
+        }
+    }
+}
+
+impl From<FT_EEPROM_HEADER> for EepromHeader {
+    fn from(t: FT_EEPROM_HEADER) -> Self {
+        EepromHeader {
+            device_type: DevType::from(t.deviceType as u8),
+            vid: t.VendorId,
+            pid: t.ProductId,
+            serial_number_enable: t.SerNumEnable != 0,
+            max_power: t.MaxPower,
+            self_powered: t.SelfPowered != 0,
+            remote_wakeup: t.RemoteWakeup != 0,
+            pulldown_enable: t.PullDownEnable != 0,
+        }
+    }
+}
+
+impl EepromHeader {
+    /// Create a new EEPROM Header configuration with sensible default values.
+    fn new(device_type: DevType) -> Self {
+        EepromHeader {
+            device_type: device_type,
+            vid: FT_DEFAULT_VENDOR_ID,
+            pid: FT_DEFAULT_PRODUCT_ID,
+            serial_number_enable: true,
+            max_power: 250,
+            self_powered: false,
+            remote_wakeup: false,
+            pulldown_enable: true,
         }
     }
 }
@@ -217,21 +296,60 @@ impl From<EepromFt2232h> for FT_EEPROM_2232H {
 
 /// EEPROM configuration for an FT4232H device.
 #[allow(missing_docs)]
+#[derive(Debug)]
 pub struct EepromFt4232h {
     pub common: EepromHeader,
     pub cha: EepromFt4232hChannel,
     pub chb: EepromFt4232hChannel,
     pub chc: EepromFt4232hChannel,
     pub chd: EepromFt4232hChannel,
+    pub strings: EepromStrings,
+}
+
+impl Eeprom for EepromFt4232h {
+    type FtEeprom = FT_EEPROM_4232H;
+
+    fn strings(&self) -> &EepromStrings {
+        &self.strings
+    }
+
+    fn string_mut(&mut self) -> &mut EepromStrings {
+        &mut self.strings
+    }
+}
+
+impl Default for EepromFt4232h {
+    fn default() -> Self {
+        EepromFt4232h {
+            common: EepromHeader::new(DevType::Dev4232H),
+            cha: EepromFt4232hChannel::default(),
+            chb: EepromFt4232hChannel::default(),
+            chc: EepromFt4232hChannel::default(),
+            chd: EepromFt4232hChannel::default(),
+            strings: EepromStrings::default(),
+        }
+    }
 }
 
 /// FT4232H EEPROM configuration for each of the device's channels
 #[allow(missing_docs)]
+#[derive(Debug)]
 pub struct EepromFt4232hChannel {
     slow_slew: bool,
     schmitt_input: bool,
     drive_current: DriveCurrent,
     use_ri_as_txden: bool,
+}
+
+impl Default for EepromFt4232hChannel {
+    fn default() -> Self {
+        EepromFt4232hChannel {
+            slow_slew: false,
+            schmitt_input: false,
+            drive_current: DriveCurrent::Current4mA,
+            use_ri_as_txden: false,
+        }
+    }
 }
 
 impl From<EepromFt4232h> for FT_EEPROM_4232H {
@@ -258,6 +376,39 @@ impl From<EepromFt4232h> for FT_EEPROM_4232H {
             BDriverType: false as u8,
             CDriverType: false as u8,
             DDriverType: false as u8,
+        }
+    }
+}
+
+impl From<FT_EEPROM_4232H> for EepromFt4232h {
+    fn from(t: FT_EEPROM_4232H) -> Self {
+        EepromFt4232h {
+            common: t.common.into(),
+            cha: EepromFt4232hChannel {
+                slow_slew: t.ASlowSlew != 0,
+                schmitt_input: t.ASchmittInput != 0,
+                drive_current: DriveCurrent::from(t.ADriveCurrent),
+                use_ri_as_txden: t.ARIIsTXDEN != 0,
+            },
+            chb: EepromFt4232hChannel {
+                slow_slew: t.BSlowSlew != 0,
+                schmitt_input: t.BSchmittInput != 0,
+                drive_current: DriveCurrent::from(t.BDriveCurrent),
+                use_ri_as_txden: t.BRIIsTXDEN != 0,
+            },
+            chc: EepromFt4232hChannel {
+                slow_slew: t.CSlowSlew != 0,
+                schmitt_input: t.CSchmittInput != 0,
+                drive_current: DriveCurrent::from(t.CDriveCurrent),
+                use_ri_as_txden: t.CRIIsTXDEN != 0,
+            },
+            chd: EepromFt4232hChannel {
+                slow_slew: t.DSlowSlew != 0,
+                schmitt_input: t.DSchmittInput != 0,
+                drive_current: DriveCurrent::from(t.DDriveCurrent),
+                use_ri_as_txden: t.DRIIsTXDEN != 0,
+            },
+            strings: EepromStrings::default(),
         }
     }
 }
@@ -766,4 +917,17 @@ pub enum DriveCurrent {
     Current8mA = 8,
     Current12mA = 12,
     Current16mA = 16,
+    CurrentInvalid = 0,
+}
+
+impl From<u8> for DriveCurrent {
+    fn from(value: u8) -> Self {
+        match value {
+            4 => Self::Current4mA,
+            8 => Self::Current8mA,
+            12 => Self::Current12mA,
+            16 => Self::Current16mA,
+            _ => Self::CurrentInvalid,
+        }
+    }
 }

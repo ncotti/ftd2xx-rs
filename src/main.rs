@@ -1,3 +1,4 @@
+use ftd2xx_rs::eeprom::EepromFt4232h;
 use ftd2xx_rs::scan;
 use ftd2xx_rs::*;
 
@@ -25,12 +26,12 @@ fn main() {
 
     let handle = open(0).unwrap();
 
-    let eeprom = ee_read(handle).unwrap();
-
-    println!("{:?}", eeprom);
-
     let device_infos: Vec<DevInfo> = scan().unwrap();
     for info in device_infos {
         println!("{}", info)
     }
+
+    let eeprom: EepromFt4232h = classic::eeprom_read(handle).unwrap();
+
+    println!("{:?}", eeprom);
 }

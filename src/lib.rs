@@ -7,11 +7,13 @@ pub mod classic;
 pub mod eeprom;
 pub mod my_type;
 pub mod types;
+pub mod utils;
 
 /// FtHandle is a void* FT_HANDLE. It is used to manage any FT device.
 pub type FtHandle = ftd2xx_sys::FT_HANDLE;
 
 pub use classic::*;
+pub use eeprom::Eeprom;
 
 pub use types::{DevInfo, FtError, Version};
 

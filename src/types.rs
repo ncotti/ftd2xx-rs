@@ -8,7 +8,7 @@ mod dev_type;
 mod fterror;
 mod version;
 
-pub use dev_info::DevInfo;
+pub use dev_info::{DevInfo, FT_DEFAULT_PRODUCT_ID, FT_DEFAULT_VENDOR_ID};
 pub use dev_type::DevType;
 pub use fterror::FtError;
 pub(crate) use fterror::ft_try;
