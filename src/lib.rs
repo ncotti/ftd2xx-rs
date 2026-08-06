@@ -13,7 +13,6 @@ pub mod utils;
 pub type FtHandle = ftd2xx_sys::FT_HANDLE;
 
 pub use classic::*;
-pub use eeprom::Eeprom;
 
 pub use types::{DevInfo, FtError, Version};
 

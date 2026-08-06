@@ -2,10 +2,13 @@
 //! described in section 3 of the D2XX Programmer's Guide.
 
 use crate::{
-    Eeprom, FtHandle,
+    FtHandle,
     my_type::{BitMode, EventCause, FlowControl, UartInfo},
     types::{DevInfo, FtError, Version, ft_try},
 };
+
+use crate::eeprom::Eeprom;
+
 use ftd2xx_sys::*;
 
 use std::ffi::c_void;

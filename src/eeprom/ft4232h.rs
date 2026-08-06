@@ -1,10 +1,12 @@
-//! Doc
+//! EEPROM structures for the devices:
+//! * FT4232H
+//! * FT4232HP
+//! * FT4233HP
 
 use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromPD, EepromStrings};
 use ftd2xx_sys::{FT_EEPROM_4232H, FT_EEPROM_4232HP, FT_EEPROM_4233HP};
 
-/// EEPROM configuration for an FT4232H device.
-#[allow(missing_docs)]
+/// FT4232H EEPROM configuration.
 #[derive(Debug)]
 pub struct EepromFt4232h {
     pub common: EepromHeader,
