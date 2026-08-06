@@ -1,7 +1,7 @@
 //! Doc
 
-use ftd2xx_sys::FT_EEPROM_232B;
 use crate::eeprom::EepromHeader;
+use ftd2xx_sys::FT_EEPROM_232B;
 
 /// EEPROM configuration for an FT232B device.
 pub struct EepromFt232b {

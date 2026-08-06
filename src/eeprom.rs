@@ -1,24 +1,19 @@
 //! Implementation for reading and writing the EEPROM
-//! 
-//! 
-//! 
+//!
+//!
+//!
 
-
+mod ft2232;
+mod ft2232h;
 mod ft232b;
 mod ft232h;
 mod ft232r;
-mod ft2232;
-mod ft2232h;
 mod ft4222h;
 pub mod ft4232h;
 mod ftxseries;
 
-
-
-use ftd2xx_sys::{FT_EEPROM_HEADER, FT_EEPROM_PD, FT_EEPROM_PD_PDO_mv_ma};
 use crate::types::{DevType, FT_DEFAULT_PRODUCT_ID, FT_DEFAULT_VENDOR_ID};
-
-
+use ftd2xx_sys::{FT_EEPROM_HEADER, FT_EEPROM_PD, FT_EEPROM_PD_PDO_mv_ma};
 
 #[derive(Default, Debug)]
 struct EepromStrings {
@@ -157,20 +152,6 @@ impl EepromHeader {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Common Power Delivery Output (PDO) currents and voltages.
 pub struct EepromPDO {
@@ -347,18 +328,6 @@ impl From<EepromPD> for FT_EEPROM_PD {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 /// Drive current of each I/O pin, i.e., the maximum allowed current for each
 /// pin to source/sink, in mA.

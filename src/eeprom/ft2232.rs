@@ -4,7 +4,6 @@ use ftd2xx_sys::FT_EEPROM_2232;
 
 use crate::eeprom::EepromHeader;
 
-
 /// EEPROM configuration for an FT2232 device.
 pub struct EepromFt2232 {
     /// EEPROM common configuration

@@ -1,5 +1,5 @@
 //! Doc
-//! 
+//!
 
 use crate::eeprom::{DriveCurrent, EepromHeader, EepromPD};
 

@@ -1,6 +1,6 @@
 //! Doc
 
-use ftd2xx_sys::{FT_EEPROM_X_SERIES};
+use ftd2xx_sys::FT_EEPROM_X_SERIES;
 
 use crate::eeprom::{DriveCurrent, EepromHeader};
 

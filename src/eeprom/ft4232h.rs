@@ -1,8 +1,7 @@
 //! Doc
 
-
+use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromPD, EepromStrings};
 use ftd2xx_sys::{FT_EEPROM_4232H, FT_EEPROM_4232HP, FT_EEPROM_4233HP};
-use crate::eeprom::{EepromHeader, DriveCurrent, Eeprom, EepromStrings, EepromPD, DevType};
 
 /// EEPROM configuration for an FT4232H device.
 #[allow(missing_docs)]

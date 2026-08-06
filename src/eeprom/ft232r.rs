@@ -1,8 +1,8 @@
 //! Crate doc
-//! 
+//!
 
-use ftd2xx_sys::FT_EEPROM_232R;
 use crate::eeprom::EepromHeader;
+use ftd2xx_sys::FT_EEPROM_232R;
 
 /// EEPROM configuration for an FT232R device.
 #[allow(missing_docs)]

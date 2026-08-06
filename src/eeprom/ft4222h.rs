@@ -1,9 +1,8 @@
 //! Doc
-//! 
+//!
 
+use crate::eeprom::{DriveCurrent, EepromHeader};
 use ftd2xx_sys::FT_EEPROM_4222H;
-use crate::eeprom::{EepromHeader, DriveCurrent};
-
 
 /// EEPROM configuration for an FT4222H device.
 #[allow(missing_docs)]
