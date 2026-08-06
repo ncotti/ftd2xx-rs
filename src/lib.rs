@@ -17,6 +17,8 @@ pub use eeprom::Eeprom;
 
 pub use types::{DevInfo, FtError, Version};
 
+pub use eeprom::ft4232h::EepromFt4232h;
+
 /// Scans all currently connected devices, and returns a list with their
 /// information. By default, only devices with VID=0x0403 and
 /// PID = {0x6001, 0x6010, 0x6006} are listed. To use a custom {VID, PID} tuple,

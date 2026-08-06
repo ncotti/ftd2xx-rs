@@ -1,4 +1,4 @@
-use ftd2xx_rs::eeprom::EepromFt4232h;
+use ftd2xx_rs::EepromFt4232h;
 use ftd2xx_rs::scan;
 use ftd2xx_rs::*;
 
