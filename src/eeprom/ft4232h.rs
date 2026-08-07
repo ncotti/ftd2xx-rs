@@ -12,7 +12,7 @@ pub struct EepromFt4232h {
     /// Common EEPROM contents for all devices.
     pub common: EepromHeader,
     /// EEPROM strings: manufacturer, ID, serial number and description.
-    pub strings: EepromStrings,
+    strings: EepromStrings,
     /// Channel A configuration.
     pub cha: EepromFt4232hChannel,
     /// Channel B configuration.
@@ -139,34 +139,124 @@ impl From<FT_EEPROM_4232H> for EepromFt4232h {
     }
 }
 
-/// EEPROM configuration for a FT4232HP device.
-#[allow(missing_docs)]
+/// FT4232HP EEPROM configuration
+#[derive(Debug, Clone)]
 pub struct EepromFt4232hp {
-    ft4232h: EepromFt4232h,
-    pd: EepromPD,
+    /// Base FT4232H configuration
+    pub ft4232h: EepromFt4232h,
+    /// Power delivery aggregate configuration
+    pub pd: EepromPD,
 }
 
-impl From<EepromFt4232hp> for FT_EEPROM_4232HP {
-    fn from(t: EepromFt4232hp) -> Self {
-        FT_EEPROM_4232HP {
-            ft4232h: t.ft4232h.into(),
-            pd: t.pd.into(),
+impl Eeprom for EepromFt4232hp {
+    type FtEeprom = FT_EEPROM_4232HP;
+
+    fn strings(&self) -> &EepromStrings {
+        &self.ft4232h.strings
+    }
+
+    fn string_mut(&mut self) -> &mut EepromStrings {
+        &mut self.ft4232h.strings
+    }
+}
+
+impl Default for EepromFt4232hp {
+    fn default() -> Self {
+        EepromFt4232hp {
+            ft4232h: EepromFt4232h {
+                common: EepromHeader::new(DevType::Dev4232HP),
+                cha: EepromFt4232hChannel::default(),
+                chb: EepromFt4232hChannel::default(),
+                chc: EepromFt4232hChannel::default(),
+                chd: EepromFt4232hChannel::default(),
+                strings: EepromStrings::default(),
+            },
+            pd: EepromPD::default(),
         }
     }
 }
 
-/// EEPROM configuration for a FT4233HP device.
-#[allow(missing_docs)]
+impl From<&EepromFt4232hp> for FT_EEPROM_4232HP {
+    fn from(t: &EepromFt4232hp) -> Self {
+        FT_EEPROM_4232HP {
+            ft4232h: (&t.ft4232h).into(),
+            pd: (&t.pd).into(),
+        }
+    }
+}
+
+impl From<EepromFt4232hp> for FT_EEPROM_4232HP {
+    fn from(t: EepromFt4232hp) -> Self {
+        Self::from(&t)
+    }
+}
+
+impl From<FT_EEPROM_4232HP> for EepromFt4232hp {
+    fn from(t: FT_EEPROM_4232HP) -> Self {
+        EepromFt4232hp {
+            ft4232h: t.ft4232h.into(),
+            pd: EepromPD::default(),
+        }
+    }
+}
+
+/// FT4233HP EEPROM configuration
+#[derive(Debug, Clone)]
 pub struct EepromFt4233hp {
-    ft4232h: EepromFt4232h,
-    pd: EepromPD,
+    /// Base FT4232H configuration
+    pub ft4232h: EepromFt4232h,
+    /// Power delivery aggregate configuration
+    pub pd: EepromPD,
+}
+
+impl Eeprom for EepromFt4233hp {
+    type FtEeprom = FT_EEPROM_4233HP;
+
+    fn strings(&self) -> &EepromStrings {
+        &self.ft4232h.strings
+    }
+
+    fn string_mut(&mut self) -> &mut EepromStrings {
+        &mut self.ft4232h.strings
+    }
+}
+
+impl Default for EepromFt4233hp {
+    fn default() -> Self {
+        EepromFt4233hp {
+            ft4232h: EepromFt4232h {
+                common: EepromHeader::new(DevType::Dev4232HP),
+                cha: EepromFt4232hChannel::default(),
+                chb: EepromFt4232hChannel::default(),
+                chc: EepromFt4232hChannel::default(),
+                chd: EepromFt4232hChannel::default(),
+                strings: EepromStrings::default(),
+            },
+            pd: EepromPD::default(),
+        }
+    }
+}
+
+impl From<&EepromFt4233hp> for FT_EEPROM_4233HP {
+    fn from(t: &EepromFt4233hp) -> Self {
+        FT_EEPROM_4233HP {
+            ft4232h: (&t.ft4232h).into(),
+            pd: (&t.pd).into(),
+        }
+    }
 }
 
 impl From<EepromFt4233hp> for FT_EEPROM_4233HP {
     fn from(t: EepromFt4233hp) -> Self {
-        FT_EEPROM_4233HP {
+        Self::from(&t)
+    }
+}
+
+impl From<FT_EEPROM_4233HP> for EepromFt4233hp {
+    fn from(t: FT_EEPROM_4233HP) -> Self {
+        EepromFt4233hp {
             ft4232h: t.ft4232h.into(),
-            pd: t.pd.into(),
+            pd: EepromPD::default(),
         }
     }
 }

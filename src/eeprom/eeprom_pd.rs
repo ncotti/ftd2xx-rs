@@ -3,6 +3,7 @@
 use ftd2xx_sys::{FT_EEPROM_PD, FT_EEPROM_PD_PDO_mv_ma};
 
 /// Common Power Delivery Output (PDO) currents and voltages.
+#[derive(Debug, Clone, Default)]
 pub struct EepromPDO {
     /// Voltage delivered from power pins [0;51100]mV
     mv: [u16; 7],
@@ -10,8 +11,8 @@ pub struct EepromPDO {
     ma: [u16; 7],
 }
 
-impl From<EepromPDO> for FT_EEPROM_PD_PDO_mv_ma {
-    fn from(t: EepromPDO) -> Self {
+impl From<&EepromPDO> for FT_EEPROM_PD_PDO_mv_ma {
+    fn from(t: &EepromPDO) -> Self {
         FT_EEPROM_PD_PDO_mv_ma {
             PDO1ma: t.ma[0],
             PDO1mv: t.mv[0],
@@ -31,9 +32,16 @@ impl From<EepromPDO> for FT_EEPROM_PD_PDO_mv_ma {
     }
 }
 
+impl From<EepromPDO> for FT_EEPROM_PD_PDO_mv_ma {
+    fn from(t: EepromPDO) -> Self {
+        Self::from(&t)
+    }
+}
+
 /// Common Power Delivery (PD) configuration. Power delivery devices have a "P"
 /// at the end of their name.
 #[allow(missing_docs)]
+#[derive(Debug, Clone, Default)]
 pub struct EepromPD {
     srprs: bool,
     sraprs: bool,
@@ -99,8 +107,8 @@ pub struct EepromPD {
     extdc: bool,
 }
 
-impl From<EepromPD> for FT_EEPROM_PD {
-    fn from(t: EepromPD) -> Self {
+impl From<&EepromPD> for FT_EEPROM_PD {
+    fn from(t: &EepromPD) -> Self {
         FT_EEPROM_PD {
             srprs: t.srprs as u8,
             sraprs: t.sraprs as u8,
@@ -151,9 +159,9 @@ impl From<EepromPD> for FT_EEPROM_PD {
             VSET0V_GPIO: t.vset0v_gpio,
             VSAFE5V_GPIO: t.vsafe5v_gpio,
 
-            BM_PDO_Sink: t.bm_pdo_sink.into(),
-            BM_PDO_Source: t.bm_pdo_source.into(),
-            BM_PDO_Sink_2: t.bm_pdo_sink_2.into(),
+            BM_PDO_Sink: (&t.bm_pdo_sink).into(),
+            BM_PDO_Source: (&t.bm_pdo_source).into(),
+            BM_PDO_Sink_2: (&t.bm_pdo_sink_2).into(),
 
             srt: t.srt,
             hrt: t.hrt,
@@ -175,5 +183,11 @@ impl From<EepromPD> for FT_EEPROM_PD {
             trim2: t.trim2,
             extdc: t.extdc as u8,
         }
+    }
+}
+
+impl From<EepromPD> for FT_EEPROM_PD {
+    fn from(t: EepromPD) -> Self {
+        Self::from(&t)
     }
 }
