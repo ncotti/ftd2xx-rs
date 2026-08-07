@@ -1,4 +1,5 @@
 use ftd2xx_rs::EepromFt4232h;
+use ftd2xx_rs::eeprom::Eeprom;
 use ftd2xx_rs::scan;
 use ftd2xx_rs::*;
 
@@ -31,7 +32,19 @@ fn main() {
         println!("{}", info)
     }
 
-    let eeprom: EepromFt4232h = classic::eeprom_read(handle).unwrap();
+    let old_eeprom: EepromFt4232h = classic::eeprom_read(handle).unwrap();
 
-    println!("{:?}", eeprom);
+    println!("{:?}", old_eeprom);
+
+    let mut new_eeprom = old_eeprom.clone();
+    new_eeprom.set_manufacturer("Cotti");
+    new_eeprom.cha.slow_slew = true;
+
+    classic::eeprom_program(handle, &new_eeprom).unwrap();
+
+    let new_eeprom: EepromFt4232h = classic::eeprom_read(handle).unwrap();
+
+    println!("{:?}", new_eeprom);
+
+    classic::eeprom_program(handle, &old_eeprom).unwrap();
 }

@@ -21,10 +21,17 @@ pub use crate::eeprom::eeprom_pd::{EepromPD, EepromPDO};
 use crate::types::DevType;
 
 /// Basic EEPROM trait which must be implemented for all devices' EEPROMs.
-pub trait Eeprom: Sized + Default + From<Self::FtEeprom> {
-    /// Holds the reference `FT_EEPROM_XXX` type that the Rust's struct
-    /// must be able to be converted from/into.
-    type FtEeprom: for<'a> From<Self>;
+/// An Eeprom device must define the following tratis:
+/// * Sized: A known size at compile time.
+/// * Default: A way to create a default valued configuration.
+/// * From<FtEeprom>: Values from the `FT_EEPROM_XXX` type should be able
+/// * Clone: To duplicate an Eeprom configuration.
+/// to be converted into this struct.
+pub trait Eeprom: Sized + Default + From<Self::FtEeprom> + Clone {
+    /// Holds the reference `FT_EEPROM_XXX` type that this struct
+    /// must be able to be converted into, either consuming the value or by
+    /// reference.
+    type FtEeprom: for<'a> From<&'a Self> + for<'a> From<Self>;
 
     // fn read(ft_handle: FtHandle) -> Result<Self, FtError>;
     // fn write(&self) -> Result<(), FtError>;
@@ -62,31 +69,31 @@ pub trait Eeprom: Sized + Default + From<Self::FtEeprom> {
 
     /// Sets the manufacturer string. To write it to the EEPROM, use the
     /// `write()` method.
-    fn set_manufacturer(&mut self, manufacturer: String) {
-        self.string_mut().manufacturer = manufacturer;
+    fn set_manufacturer(&mut self, manufacturer: impl Into<String>) {
+        self.string_mut().manufacturer = manufacturer.into();
     }
 
     /// Sets the manufacturer ID string. To write it to the EEPROM, use the
     /// `write()` method.
-    fn set_manufacturer_id(&mut self, manufacturer_id: String) {
-        self.string_mut().manufacturer_id = manufacturer_id;
+    fn set_manufacturer_id(&mut self, manufacturer_id: impl Into<String>) {
+        self.string_mut().manufacturer_id = manufacturer_id.into();
     }
 
     /// Sets the description string. To write it to the EEPROM, use the
     /// `write()` method.
-    fn set_description(&mut self, description: String) {
-        self.string_mut().description = description;
+    fn set_description(&mut self, description: impl Into<String>) {
+        self.string_mut().description = description.into();
     }
 
     /// Sets the serial number string. To write it to the EEPROM, use the
     /// `write()` method.
-    fn set_serial_number(&mut self, serial_number: String) {
-        self.string_mut().serial_number = serial_number;
+    fn set_serial_number(&mut self, serial_number: impl Into<String>) {
+        self.string_mut().serial_number = serial_number.into();
     }
 }
 
 /// These are all the possible Strings that are held in FT EEPROMs.
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct EepromStrings {
     /// Manufacturer.
     pub manufacturer: String,

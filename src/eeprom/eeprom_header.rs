@@ -4,7 +4,7 @@ use crate::types::{DevType, FT_DEFAULT_PRODUCT_ID, FT_DEFAULT_VENDOR_ID};
 use ftd2xx_sys::FT_EEPROM_HEADER;
 
 /// Common EEPROM header used for all devices, based on the `FT_EEPROM_HEADER`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EepromHeader {
     /// Device type. This field is nor read or written to the EEPROM, but
     /// rather used by the FTD2XX library to know the EEPROM layout.
@@ -35,8 +35,8 @@ pub struct EepromHeader {
     pub pulldown_enable: bool,
 }
 
-impl From<EepromHeader> for FT_EEPROM_HEADER {
-    fn from(t: EepromHeader) -> Self {
+impl From<&EepromHeader> for FT_EEPROM_HEADER {
+    fn from(t: &EepromHeader) -> Self {
         FT_EEPROM_HEADER {
             deviceType: t.device_type as u32,
             VendorId: t.vid,
@@ -47,6 +47,12 @@ impl From<EepromHeader> for FT_EEPROM_HEADER {
             RemoteWakeup: t.remote_wakeup as u8,
             PullDownEnable: t.pulldown_enable as u8,
         }
+    }
+}
+
+impl From<EepromHeader> for FT_EEPROM_HEADER {
+    fn from(t: EepromHeader) -> Self {
+        Self::from(&t)
     }
 }
 

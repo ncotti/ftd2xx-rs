@@ -5,6 +5,7 @@ use crate::{
     FtHandle,
     my_type::{BitMode, EventCause, FlowControl, UartInfo},
     types::{DevInfo, FtError, Version, ft_try},
+    utils::string_to_i8_array,
 };
 
 use crate::eeprom::Eeprom;
@@ -13,7 +14,7 @@ use ftd2xx_sys::*;
 
 use std::ffi::c_void;
 
-use crate::utils::i8_array_to_string;
+use crate::utils;
 
 /// 3.1 FT_SetVIDPID
 #[cfg(not(target_os = "windows"))]
@@ -525,7 +526,6 @@ pub fn ee_ua_write(ft_handle: FtHandle, bytes: &mut Vec<u8>) -> Result<(), FtErr
 
 /// 4.11 FT_EEPROM_Read
 pub fn eeprom_read<T: Eeprom>(ft_handle: FtHandle) -> Result<T, FtError> {
-    let eeprom: T = T::default();
     let mut manufacturer: [i8; 64] = [0; 64];
     let mut manufacturer_id: [i8; 64] = [0; 64];
     let mut description: [i8; 64] = [0; 64];
@@ -536,7 +536,7 @@ pub fn eeprom_read<T: Eeprom>(ft_handle: FtHandle) -> Result<T, FtError> {
     let p_description: *mut i8 = description.as_mut_ptr();
     let p_serial_number: *mut i8 = serial_number.as_mut_ptr();
 
-    let mut ft_eeprom: T::FtEeprom = eeprom.into();
+    let mut ft_eeprom: T::FtEeprom = T::default().into();
     let p_ft_eeprom: *mut c_void = (&mut ft_eeprom as *mut T::FtEeprom).cast();
 
     ft_try!(FT_EEPROM_Read(
@@ -550,16 +550,33 @@ pub fn eeprom_read<T: Eeprom>(ft_handle: FtHandle) -> Result<T, FtError> {
     ));
 
     let mut eeprom: T = T::from(ft_eeprom);
-    eeprom.set_manufacturer(i8_array_to_string(&manufacturer));
-    eeprom.set_manufacturer_id(i8_array_to_string(&manufacturer_id));
-    eeprom.set_description(i8_array_to_string(&description));
-    eeprom.set_serial_number(i8_array_to_string(&serial_number));
+    eeprom.set_manufacturer(utils::i8_array_to_string(&manufacturer));
+    eeprom.set_manufacturer_id(utils::i8_array_to_string(&manufacturer_id));
+    eeprom.set_description(utils::i8_array_to_string(&description));
+    eeprom.set_serial_number(utils::i8_array_to_string(&serial_number));
 
     Ok(eeprom)
 }
 
 /// 4.12 FT_EEPROM_Program TODO
-pub fn eeprom_program(_ft_handle: FtHandle) -> Result<(), FtError> {
+pub fn eeprom_program<T: Eeprom>(ft_handle: FtHandle, eeprom: &T) -> Result<(), FtError> {
+    let mut manufacturer: [i8; 64] = string_to_i8_array(eeprom.get_manufacturer());
+    let mut manufacturer_id: [i8; 64] = string_to_i8_array(eeprom.get_manufacturer_id());
+    let mut description: [i8; 64] = string_to_i8_array(eeprom.get_description());
+    let mut serial_number: [i8; 64] = string_to_i8_array(eeprom.get_serial_number());
+
+    let mut ft_eeprom: T::FtEeprom = eeprom.into();
+    let p_ft_eeprom: *mut c_void = (&mut ft_eeprom as *mut T::FtEeprom).cast();
+
+    ft_try!(FT_EEPROM_Program(
+        ft_handle,
+        p_ft_eeprom,
+        std::mem::size_of::<T::FtEeprom>() as u32,
+        manufacturer.as_mut_ptr(),
+        manufacturer_id.as_mut_ptr(),
+        description.as_mut_ptr(),
+        serial_number.as_mut_ptr()
+    ));
     Ok(())
 }
 

@@ -1,4 +1,4 @@
-//! EEPROM structures for the devices:
+//! EEPROM structures for the following devices:
 //! * FT4232H
 //! * FT4232HP
 //! * FT4233HP
@@ -7,14 +7,20 @@ use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromPD, Eepro
 use ftd2xx_sys::{FT_EEPROM_4232H, FT_EEPROM_4232HP, FT_EEPROM_4233HP};
 
 /// FT4232H EEPROM configuration.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EepromFt4232h {
+    /// Common EEPROM contents for all devices.
     pub common: EepromHeader,
-    pub cha: EepromFt4232hChannel,
-    pub chb: EepromFt4232hChannel,
-    pub chc: EepromFt4232hChannel,
-    pub chd: EepromFt4232hChannel,
+    /// EEPROM strings: manufacturer, ID, serial number and description.
     pub strings: EepromStrings,
+    /// Channel A configuration.
+    pub cha: EepromFt4232hChannel,
+    /// Channel B configuration.
+    pub chb: EepromFt4232hChannel,
+    /// Channel C configuration.
+    pub chc: EepromFt4232hChannel,
+    /// Channel D configuration.
+    pub chd: EepromFt4232hChannel,
 }
 
 impl Eeprom for EepromFt4232h {
@@ -42,14 +48,17 @@ impl Default for EepromFt4232h {
     }
 }
 
-/// FT4232H EEPROM configuration for each of the device's channels
-#[allow(missing_docs)]
-#[derive(Debug)]
+/// FT4232H EEPROM channel configuration
+#[derive(Debug, Clone)]
 pub struct EepromFt4232hChannel {
-    slow_slew: bool,
-    schmitt_input: bool,
-    drive_current: DriveCurrent,
-    use_ri_as_txden: bool,
+    /// Slow slew rate.
+    pub slow_slew: bool,
+    /// The inputs will have an hysteresis for changing electrical state
+    pub schmitt_input: bool,
+    /// Maximum current that each I/O pin may source/sink.
+    pub drive_current: DriveCurrent,
+    /// Enables TXDEN signal for RS485 buses.
+    pub use_ri_as_txden: bool,
 }
 
 impl Default for EepromFt4232hChannel {
@@ -63,10 +72,10 @@ impl Default for EepromFt4232hChannel {
     }
 }
 
-impl From<EepromFt4232h> for FT_EEPROM_4232H {
-    fn from(t: EepromFt4232h) -> Self {
+impl From<&EepromFt4232h> for FT_EEPROM_4232H {
+    fn from(t: &EepromFt4232h) -> Self {
         FT_EEPROM_4232H {
-            common: t.common.into(),
+            common: (&t.common).into(),
             ASlowSlew: t.cha.slow_slew as u8,
             ASchmittInput: t.cha.schmitt_input as u8,
             ADriveCurrent: t.cha.drive_current as u8,
@@ -88,6 +97,12 @@ impl From<EepromFt4232h> for FT_EEPROM_4232H {
             CDriverType: false as u8,
             DDriverType: false as u8,
         }
+    }
+}
+
+impl From<EepromFt4232h> for FT_EEPROM_4232H {
+    fn from(t: EepromFt4232h) -> Self {
+        Self::from(&t)
     }
 }
 
