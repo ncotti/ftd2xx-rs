@@ -49,7 +49,7 @@ impl Default for EepromFt4232h {
 }
 
 /// FT4232H EEPROM channel configuration
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EepromFt4232hChannel {
     /// Slow slew rate.
     pub slow_slew: bool,
@@ -59,17 +59,6 @@ pub struct EepromFt4232hChannel {
     pub drive_current: DriveCurrent,
     /// Enables TXDEN signal for RS485 buses.
     pub use_ri_as_txden: bool,
-}
-
-impl Default for EepromFt4232hChannel {
-    fn default() -> Self {
-        EepromFt4232hChannel {
-            slow_slew: false,
-            schmitt_input: false,
-            drive_current: DriveCurrent::Current4mA,
-            use_ri_as_txden: false,
-        }
-    }
 }
 
 impl From<&EepromFt4232h> for FT_EEPROM_4232H {

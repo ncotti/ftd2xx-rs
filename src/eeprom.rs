@@ -141,3 +141,9 @@ impl From<u8> for DriveCurrent {
         }
     }
 }
+
+impl Default for DriveCurrent {
+    fn default() -> Self {
+        DriveCurrent::Current4mA
+    }
+}
