@@ -1,3 +1,5 @@
+//! Useful functions used in this crate.
+
 /// Converts an [i8] array into a String.
 pub fn i8_array_to_string(buf: &[i8]) -> String {
     let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());

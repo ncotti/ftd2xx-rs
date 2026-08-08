@@ -3,7 +3,6 @@
 
 use crate::{
     FtHandle,
-    my_type::{BitMode, EventCause, FlowControl, UartInfo},
     types::{DevInfo, FtError, Version, ft_try},
     utils::string_to_i8_array,
 };
@@ -15,6 +14,77 @@ use ftd2xx_sys::*;
 use std::ffi::c_void;
 
 use crate::utils;
+
+/// Describes an UART interface
+pub struct UartInfo {
+    /// Parity bit
+    pub parity: Parity,
+    /// DAta bits
+    pub bits: BitsPerWord,
+    /// Stop bits
+    pub stop_bits: StopBits,
+}
+
+
+/// Parity bit
+#[repr(u8)]
+#[allow(missing_docs)]
+pub enum Parity {
+    None = 0,
+    Odd = 1,
+    Even = 2,
+    Mark = 3,
+    Space = 4,
+}
+
+/// Bits per word in UART transaction
+#[repr(u8)]
+pub enum BitsPerWord {
+    /// Seven bits
+    Bits7 = 7,
+    /// Eight bits
+    Bits8 = 8,
+}
+
+/// Number of stop bits per UART transaction
+#[repr(u8)]
+pub enum StopBits {
+    /// One stop bit
+    StopBits1 = 0,
+    /// Two stop bits
+    StopBits2 = 2,
+}
+
+#[repr(u16)]
+#[allow(missing_docs)]
+pub enum FlowControl {
+    None = FT_FLOW_NONE as u16,
+    RtsCts = FT_FLOW_RTS_CTS as u16,
+    DtrDsr = FT_FLOW_DTR_DSR as u16,
+    XonXoff = FT_FLOW_XON_XOFF as u16,
+}
+
+#[allow(missing_docs)]
+pub struct EventCause {
+    pub rx_char: bool,
+    pub modem_status: bool,
+    pub line_status: bool,
+}
+
+
+#[repr(u8)]
+#[allow(missing_docs)]
+pub enum BitMode {
+    Reset = 0x0,
+    AsyncBitBang = 0x1,
+    MPSSE = 0x2,
+    SyncBitBang = 0x4,
+    MCUHostBusEmulation = 0x8,
+    FastOptoIsolatedSerial = 0x10,
+    CBUSBitBang = 0x20,
+    SingleChannelSync245FIFOMode = 0x40,
+}
+
 
 /// 3.1 FT_SetVIDPID
 #[cfg(not(target_os = "windows"))]
@@ -44,6 +114,10 @@ pub fn create_device_info_list() -> Result<u32, FtError> {
 
 /// 3.4 FT_GetDeviceInfoList
 pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DevInfo>, FtError> {
+    if number_of_devices == 0 {
+        return Err(FtError::DeviceNotFound);
+    }
+
     let mut number_of_devices: u32 = number_of_devices;
     let mut ft_devices_info: Vec<FT_DEVICE_LIST_INFO_NODE> = vec![
         FT_DEVICE_LIST_INFO_NODE {
@@ -59,18 +133,10 @@ pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DevInfo>, FtEr
             .unwrap()
     ];
 
-    println!("{:?}", ft_devices_info[0].SerialNumber.as_ptr());
     ft_try!(FT_GetDeviceInfoList(
         ft_devices_info.as_mut_ptr(),
         &mut number_of_devices
     ));
-
-    println!("{:?}", ft_devices_info[0].SerialNumber.as_ptr());
-
-    println!(
-        "Serial number: {:?}, Description: {:?}",
-        ft_devices_info[0].SerialNumber, ft_devices_info[0].Description
-    );
 
     let mut devices_info: Vec<DevInfo> = Vec::new();
 

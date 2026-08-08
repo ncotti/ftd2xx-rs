@@ -5,7 +5,10 @@ use crate::utils::i8_array_to_string;
 use ftd2xx_sys::FT_DEVICE_LIST_INFO_NODE;
 use std::fmt;
 
+/// Default Vendor ID for FTDI
 pub const FT_DEFAULT_VENDOR_ID: u16 = 0x403;
+
+/// Default PRODUCT ID.
 pub const FT_DEFAULT_PRODUCT_ID: u16 = 0x6001;
 
 /// FT device information as returned by the `scan()` methods.

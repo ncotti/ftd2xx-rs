@@ -5,7 +5,6 @@
 
 pub mod classic;
 pub mod eeprom;
-pub mod my_type;
 pub mod types;
 pub mod utils;
 
