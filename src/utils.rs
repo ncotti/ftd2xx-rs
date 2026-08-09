@@ -1,5 +1,7 @@
 //! Useful functions used in this crate.
 
+use std::io::{self, Write};
+
 /// Converts an [i8] array into a String.
 pub fn i8_array_to_string(buf: &[i8]) -> String {
     let len = buf.iter().position(|&c| c == 0).unwrap_or(buf.len());
@@ -19,4 +21,15 @@ pub fn string_to_i8_array<const N: usize>(s: &String) -> [i8; N] {
     }
 
     arr
+}
+
+/// Prints a message to stdout, and block execution until the user presses
+/// "ENTER". This function is meant to be used during tests.
+pub fn press_button_to_continue(message: &str) {
+    println!("{}", message);
+    print!("Press ENTER to continue...");
+    io::stdout().flush().unwrap();
+
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer).unwrap();
 }

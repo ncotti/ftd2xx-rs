@@ -2,20 +2,10 @@
 //!
 //!
 use ftd2xx_rs::classic::get_library_version;
-use ftd2xx_rs::device_type::*;
-use ftd2xx_rs::types::*;
 use ftd2xx_rs::{FtError, classic};
+use ftd2xx_rs::types::DevType;
 use regex::Regex;
-use std::io::{self, Write};
-
-fn press_button_to_continue(message: &str) {
-    println!("{}", message);
-    print!("Press ENTER to continue...");
-    io::stdout().flush().unwrap();
-
-    let mut buffer = String::new();
-    io::stdin().read_line(&mut buffer).unwrap();
-}
+use ftd2xx_rs::utils::press_button_to_continue;
 
 #[test]
 #[ignore = "Should only be manually run with no devices connected"]
@@ -36,7 +26,7 @@ fn scanning_an_ft4232h() -> Result<(), FtError> {
     let devices = classic::get_device_info_list(device_number)?;
     assert!(devices.len() == 4);
     for device in devices {
-        assert!(device.dev_type == DeviceType::Dev4232H);
+        assert!(device.dev_type == DevType::Dev4232H);
     }
     Ok(())
 }

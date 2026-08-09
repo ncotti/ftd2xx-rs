@@ -34,12 +34,7 @@ pub use eeprom::ft4232h::EepromFt4232h;
 /// ```
 pub fn scan() -> Result<Vec<DevInfo>, FtError> {
     let device_qtty = classic::create_device_info_list()?;
-
-    let device_infos: Vec<DevInfo> = if device_qtty > 0 {
-        classic::get_device_info_list(device_qtty)?
-    } else {
-        Vec::new()
-    };
+    let device_infos: Vec<DevInfo> = classic::get_device_info_list(device_qtty)?;
     Ok(device_infos)
 }
 
@@ -49,7 +44,7 @@ pub fn scan() -> Result<Vec<DevInfo>, FtError> {
 ///
 /// Example:
 /// ```
-/// use ftd22_rs::scan_custom;
+/// use ftd2xx_rs::scan_custom;
 ///
 /// let devices_infos: Vec<DevInfo> = scan_custom(0xABCD, 0x1234);
 /// for info in device_infos {
@@ -147,4 +142,32 @@ impl Drop for Device {
     fn drop(&mut self) {
         unsafe { classic::close(self.handle).unwrap_err_unchecked() };
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils;
+
+    /// Setup: No devices connected
+    /// Expected: Scan function should return an error.
+    #[test]
+    fn test_scan_with_no_devices() {
+        utils::press_button_to_continue("Disconnect all devices");
+    }
+
+    /// Setup: FT4232H connected
+    /// Expected: The four channels are discovered as different devices
+    #[test]
+    fn test_scan() {
+        utils::press_button_to_continue("Have a singular FT4232H connected...");
+    }
+
+    /// Setup: Two FT4232H connected.
+    /// Expected: 8 devices should be found, 2 devices, 4 channels each
+    #[test]
+    fn test_scan_multiple() {
+        utils::press_button_to_continue("Have two FT4232H devices connected...");
+    }
+
+    
 }
