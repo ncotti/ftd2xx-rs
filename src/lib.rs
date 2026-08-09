@@ -88,16 +88,20 @@ impl TryFrom<u32> for Device {
             return Err(FtError::DeviceNotFound);
         }
 
-        Self::try_from(info.unwrap())
+        let info = info.expect("Already checked that it is Some()");
+        Self::try_from(info)
     }
 }
 
 impl TryFrom<&str> for Device {
     type Error = FtError;
 
-    /// Open a device using the description. The device description must match
-    /// exactly.
+    /// Open a device using the description or the serial number.
     fn try_from(description: &str) -> Result<Self, FtError> {
+        if description.is_empty() {
+            return Err(FtError::DeviceNotFound);
+        }
+
         let infos = scan()?;
 
         let info = infos
@@ -108,7 +112,25 @@ impl TryFrom<&str> for Device {
             return Err(FtError::DeviceNotFound);
         }
 
-        Self::try_from(info.unwrap())
+        let info = info.expect("Already checked that it is Some()");
+        Self::try_from(info)
+    }
+}
+
+impl TryFrom<String> for Device {
+    type Error = FtError;
+
+    fn try_from(description: String) -> Result<Self, FtError> {
+        Self::try_from(&description)
+    }
+}
+
+impl TryFrom<&String> for Device {
+    type Error = FtError;
+
+    fn try_from(description: &String) -> Result<Self, FtError> {
+        let description: &str = description;
+        Self::try_from(description)
     }
 }
 
@@ -117,6 +139,18 @@ impl TryFrom<DevInfo> for Device {
 
     /// Open a device using the `DevInfo` obtained from a previous `scan()`.
     fn try_from(info: DevInfo) -> Result<Self, FtError> {
+        Self::try_from(&info)
+    }
+}
+
+impl TryFrom<&DevInfo> for Device {
+    type Error = FtError;
+
+    /// Open a device using the `DevInfo` obtained from a previous `scan()`.
+    fn try_from(info: &DevInfo) -> Result<Self, FtError> {
+        let mut info = info.clone();
+        info.open = true;
+
         let version = classic::get_library_version()?;
 
         let handle = classic::open_ex_by_location(info.usb_location_id)?;
@@ -126,17 +160,7 @@ impl TryFrom<DevInfo> for Device {
             version: version,
             handle: handle,
         };
-
         Ok(dev)
-    }
-}
-
-impl TryFrom<&DevInfo> for Device {
-    type Error = FtError;
-
-    /// Open a device using the `DevInfo` obtained from a previous `scan()`.
-    fn try_from(info: &DevInfo) -> Result<Self, FtError> {
-        Self::try_from(info.clone())
     }
 }
 
@@ -193,6 +217,8 @@ mod tests {
 
         println!("Trying to open from dev: {}", devices[0]);
         let probe = Device::try_from(&devices[0])?;
+        assert!(probe.info.usb_location_id == devices[0].usb_location_id);
+        assert!(probe.info.open == true);
 
         // New scan should reveal that the device has been opened
         let new_devices = scan()?;
@@ -209,6 +235,57 @@ mod tests {
         for device in devices {
             assert!(device.open == false);
         }
+
+        Ok(())
+    }
+
+    #[cfg(feature = "test-ft4232h")]
+    #[test]
+    fn test_connect_with_description() -> Result<(), FtError> {
+        let devices = scan()?;
+        assert!(devices[0].open == false);
+
+        let probe: Device = Device::try_from(&devices[0].description)?;
+        assert!(probe.info.open == true);
+        assert!(probe.info.description == devices[0].description);
+
+        let wrong_description = "This description is wrong";
+        let wrong_probe = Device::try_from(wrong_description).unwrap_err();
+        assert!(wrong_probe == FtError::DeviceNotFound);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "test-ft4232h")]
+    #[test]
+    fn test_connect_with_serial_number() -> Result<(), FtError> {
+        let devices = scan()?;
+
+        if devices[0].serial_number.is_empty() {
+            todo!("Write the eeprom")
+        }
+
+        let probe = Device::try_from(&devices[0].serial_number)?;
+        assert!(probe.info.usb_location_id == devices[0].usb_location_id);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "test-ft4232h")]
+    #[test]
+    fn test_connect_with_numbers() -> Result<(), FtError> {
+        let devices = scan()?;
+
+        assert!(devices.len() == 4);
+        let device = Device::try_from(3)?;
+        assert!(device.info.usb_location_id == devices[3].usb_location_id);
+
+        // Device index out of scope, or also wrong usb index
+        let device_wrong = Device::try_from(8).unwrap_err();
+        assert!(device_wrong == FtError::DeviceNotFound);
+
+        let device2 = Device::try_from(devices[1].usb_location_id)?;
+        assert!(device2.info.usb_location_id == devices[1].usb_location_id);
 
         Ok(())
     }
