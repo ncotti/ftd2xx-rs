@@ -25,7 +25,6 @@ pub struct UartInfo {
     pub stop_bits: StopBits,
 }
 
-
 /// Parity bit
 #[repr(u8)]
 #[allow(missing_docs)]
@@ -71,7 +70,6 @@ pub struct EventCause {
     pub line_status: bool,
 }
 
-
 #[repr(u8)]
 #[allow(missing_docs)]
 pub enum BitMode {
@@ -84,7 +82,6 @@ pub enum BitMode {
     CBUSBitBang = 0x20,
     SingleChannelSync245FIFOMode = 0x40,
 }
-
 
 /// 3.1 FT_SetVIDPID
 #[cfg(not(target_os = "windows"))]
@@ -561,10 +558,10 @@ pub fn erase_ee(ft_handle: FtHandle) -> Result<(), FtError> {
 // instead.
 
 /// 4.8 FT_EE_UASize
-pub fn ee_ua_size(ft_handle: FtHandle) -> Result<u32, FtError> {
+pub fn ee_ua_size(ft_handle: FtHandle) -> Result<usize, FtError> {
     let mut size: u32 = 0;
     ft_try!(FT_EE_UASize(ft_handle, &mut size));
-    Ok(size)
+    Ok(size as usize)
 }
 
 /// 4.9 FT_EE_UARead
@@ -583,8 +580,9 @@ pub fn ee_ua_read(ft_handle: FtHandle) -> Result<Vec<u8>, FtError> {
 }
 
 /// 4.10 FT_EE_UAWrite
-pub fn ee_ua_write(ft_handle: FtHandle, bytes: &mut Vec<u8>) -> Result<(), FtError> {
+pub fn ee_ua_write(ft_handle: FtHandle, bytes: &Vec<u8>) -> Result<(), FtError> {
     let data_len: u32 = bytes.len() as u32;
+    let mut bytes = bytes.clone();
     ft_try!(FT_EE_UAWrite(ft_handle, bytes.as_mut_ptr(), data_len));
     Ok(())
 }
@@ -619,6 +617,7 @@ pub fn eeprom_read<T: Eeprom>(ft_handle: FtHandle) -> Result<T, FtError> {
     eeprom.set_manufacturer_id(utils::i8_array_to_string(&manufacturer_id));
     eeprom.set_description(utils::i8_array_to_string(&description));
     eeprom.set_serial_number(utils::i8_array_to_string(&serial_number));
+    *eeprom.handle_mut() = ft_handle;
 
     Ok(eeprom)
 }

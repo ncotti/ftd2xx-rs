@@ -5,20 +5,21 @@
 
 mod eeprom_header;
 mod eeprom_pd;
-mod ft2232;
-mod ft2232h;
-mod ft232b;
-mod ft232h;
-mod ft232r;
-mod ft4222h;
+// mod ft2232;
+// mod ft2232h;
+// mod ft232b;
+// mod ft232h;
+// mod ft232r;
+// mod ft4222h;
 pub mod ft4232h;
-mod ftxseries;
+//mod ftxseries;
 
 use std::fmt;
 
 pub use crate::eeprom::eeprom_header::EepromHeader;
 pub use crate::eeprom::eeprom_pd::{EepromPD, EepromPDO};
 use crate::types::DevType;
+use crate::{FtError, FtHandle, classic};
 
 /// Basic EEPROM trait which must be implemented for all devices' EEPROMs.
 /// An Eeprom device must define the following tratis:
@@ -33,9 +34,38 @@ pub trait Eeprom: Sized + Default + From<Self::FtEeprom> + Clone {
     /// reference.
     type FtEeprom: for<'a> From<&'a Self> + for<'a> From<Self>;
 
-    // fn read(ft_handle: FtHandle) -> Result<Self, FtError>;
-    // fn write(&self) -> Result<(), FtError>;
-    // fn erase(&self) -> Result<(), FtError>;
+    /// Reads the EEPROM
+    fn read(ft_handle: FtHandle) -> Result<Self, FtError> {
+        classic::eeprom_read(ft_handle)
+    }
+
+    /// Writes to the EEPROM
+    fn write(&self) -> Result<(), FtError> {
+        classic::eeprom_program(self.handle(), self)
+    }
+
+    /// Erases the contents of the EEPROM
+    /// TODO, check if the eeprom ends up having all zeros or what
+    fn erase(&self) -> Result<(), FtError> {
+        classic::erase_ee(self.handle())
+    }
+
+    /// Reads user area.
+    fn read_user_area(&self) -> Result<Vec<u8>, FtError> {
+        let bytes_read = classic::ee_ua_read(self.handle())?;
+        Ok(bytes_read)
+    }
+
+    /// Writes to user area.
+    fn write_user_area(&self, bytes: &Vec<u8>) -> Result<(), FtError> {
+        classic::ee_ua_write(self.handle(), bytes)?;
+        Ok(())
+    }
+
+    /// Return amount of bytes available in user area.
+    fn get_user_area_size(&self) -> Result<usize, FtError> {
+        classic::ee_ua_size(self.handle())
+    }
 
     /// Returns all strings that can be stored in the Eeprom as
     /// immutable references. This function is not meant to be called
@@ -46,6 +76,13 @@ pub trait Eeprom: Sized + Default + From<Self::FtEeprom> + Clone {
     /// mutable references. This function is not meant to be called
     /// externally, but rather to be utilized by the setter methods.
     fn string_mut(&mut self) -> &mut EepromStrings;
+
+    /// Returns a copy of the device's FT handle. This function is not meant
+    /// to be called externally.
+    fn handle(&self) -> FtHandle;
+
+    /// Returns a mutable reference of the handle.
+    fn handle_mut(&mut self) -> &mut FtHandle;
 
     /// Returns the manufacturer string.
     fn get_manufacturer(&self) -> &String {

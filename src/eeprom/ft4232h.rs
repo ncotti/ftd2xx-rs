@@ -3,7 +3,12 @@
 //! * FT4232HP
 //! * FT4233HP
 
-use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromPD, EepromStrings};
+use std::ptr::null_mut;
+
+use crate::{
+    FtHandle,
+    eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromPD, EepromStrings},
+};
 use ftd2xx_sys::{FT_EEPROM_4232H, FT_EEPROM_4232HP, FT_EEPROM_4233HP};
 
 /// FT4232H EEPROM configuration.
@@ -13,6 +18,8 @@ pub struct EepromFt4232h {
     pub common: EepromHeader,
     /// EEPROM strings: manufacturer, ID, serial number and description.
     strings: EepromStrings,
+    /// FT handle
+    ft_handle: FtHandle,
     /// Channel A configuration.
     pub cha: EepromFt4232hChannel,
     /// Channel B configuration.
@@ -33,6 +40,14 @@ impl Eeprom for EepromFt4232h {
     fn string_mut(&mut self) -> &mut EepromStrings {
         &mut self.strings
     }
+
+    fn handle(&self) -> FtHandle {
+        self.ft_handle
+    }
+
+    fn handle_mut(&mut self) -> &mut FtHandle {
+        &mut self.ft_handle
+    }
 }
 
 impl Default for EepromFt4232h {
@@ -44,6 +59,7 @@ impl Default for EepromFt4232h {
             chc: EepromFt4232hChannel::default(),
             chd: EepromFt4232hChannel::default(),
             strings: EepromStrings::default(),
+            ft_handle: null_mut(),
         }
     }
 }
@@ -124,6 +140,7 @@ impl From<FT_EEPROM_4232H> for EepromFt4232h {
                 use_ri_as_txden: t.DRIIsTXDEN != 0,
             },
             strings: EepromStrings::default(),
+            ft_handle: null_mut(),
         }
     }
 }
@@ -147,6 +164,14 @@ impl Eeprom for EepromFt4232hp {
     fn string_mut(&mut self) -> &mut EepromStrings {
         &mut self.ft4232h.strings
     }
+
+    fn handle(&self) -> FtHandle {
+        self.ft4232h.ft_handle
+    }
+
+    fn handle_mut(&mut self) -> &mut FtHandle {
+        &mut self.ft4232h.ft_handle
+    }
 }
 
 impl Default for EepromFt4232hp {
@@ -159,6 +184,7 @@ impl Default for EepromFt4232hp {
                 chc: EepromFt4232hChannel::default(),
                 chd: EepromFt4232hChannel::default(),
                 strings: EepromStrings::default(),
+                ft_handle: null_mut(),
             },
             pd: EepromPD::default(),
         }
@@ -208,6 +234,14 @@ impl Eeprom for EepromFt4233hp {
     fn string_mut(&mut self) -> &mut EepromStrings {
         &mut self.ft4232h.strings
     }
+
+    fn handle(&self) -> FtHandle {
+        self.ft4232h.ft_handle
+    }
+
+    fn handle_mut(&mut self) -> &mut FtHandle {
+        &mut self.ft4232h.ft_handle
+    }
 }
 
 impl Default for EepromFt4233hp {
@@ -220,6 +254,7 @@ impl Default for EepromFt4233hp {
                 chc: EepromFt4232hChannel::default(),
                 chd: EepromFt4232hChannel::default(),
                 strings: EepromStrings::default(),
+                ft_handle: null_mut(),
             },
             pd: EepromPD::default(),
         }
