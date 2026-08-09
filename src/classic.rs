@@ -141,7 +141,7 @@ pub fn get_device_info_list(number_of_devices: u32) -> Result<Vec<DevInfo>, FtEr
     let mut devices_info: Vec<DevInfo> = Vec::new();
 
     for dev in ft_devices_info {
-        devices_info.push(DevInfo::new(dev));
+        devices_info.push(DevInfo::from(dev));
     }
 
     Ok(devices_info)
@@ -181,7 +181,7 @@ pub fn get_device_info_detail(device_index: u32) -> Result<DevInfo, FtError> {
         ftHandle: ft_handle,
     };
 
-    let device_info = DevInfo::new(ft_device_info);
+    let device_info = DevInfo::from(ft_device_info);
 
     Ok(device_info)
 }
@@ -223,10 +223,9 @@ pub fn open_ex_by_description(description: &str) -> Result<FtHandle, FtError> {
 /// 3.8 FT_OpenEx, with flag FT_OPEN_BY_LOCATION
 pub fn open_ex_by_location(location_id: u32) -> Result<FtHandle, FtError> {
     let mut ft_handle: FtHandle = std::ptr::null_mut();
-    let mut location_id = location_id;
-    let p_location_id: *mut c_void = (&mut location_id as *mut u32).cast();
+    let location_id = location_id;
     ft_try!(FT_OpenEx(
-        p_location_id,
+        location_id as *mut c_void,
         FT_OPEN_BY_LOCATION,
         &mut ft_handle
     ));
@@ -384,7 +383,7 @@ pub fn get_device_info(ft_handle: FtHandle) -> Result<DevInfo, FtError> {
         ftHandle: ft_handle,
     };
 
-    let device_info = DevInfo::new(ft_device_info);
+    let device_info = DevInfo::from(ft_device_info);
     Ok(device_info)
 }
 

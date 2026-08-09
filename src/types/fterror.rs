@@ -7,7 +7,7 @@ use thiserror::Error;
 
 /// FT_STATUS error codes as an enum.
 #[allow(missing_docs)]
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 #[repr(u32)]
 pub enum FtError {
     #[error("FT_INVALID_HANDLE")]

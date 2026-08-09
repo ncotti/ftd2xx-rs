@@ -4,4 +4,10 @@
 RUST_TEST_THREADS = "1"
 
 [alias]
-tt = "test -- --no-capture"
+# Tests run with no devices connected
+test-dc = "test --features test-dc"
+# Tests run with an FT4232H probe connected
+test-ft4232h = "test --features test-ft4232h"
+# Test run with an FT4232H probe manually connected and disconnected
+# (instructions are printed per test)
+test-ft4232h-interactive = "test --features test-ft4232h test-interactive -- --no-capture"

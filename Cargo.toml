@@ -9,3 +9,10 @@ rand = "0.10.2"
 regex = "1.13.1"
 thiserror = "2.0.19"
 
+[features]
+# These tests require a FT4232H connected to an USB port.
+test-ft4232h = []
+# These tests require interactive input from the user.
+test-interactive = []
+# These tests require no probe connected to the host's computer.
+test-dc = []

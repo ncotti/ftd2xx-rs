@@ -12,7 +12,7 @@ pub const FT_DEFAULT_VENDOR_ID: u16 = 0x403;
 pub const FT_DEFAULT_PRODUCT_ID: u16 = 0x6001;
 
 /// FT device information as returned by the `scan()` methods.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DevInfo {
     /// If "true", the device's port is open.
     pub open: bool,
@@ -41,12 +41,10 @@ pub struct DevInfo {
     pub description: String,
 }
 
-impl DevInfo {
-    /// Creates a new device info from the raw `FT_DEVICE_LIST_INFO_NODE`,
-    /// returned from `FT_GetDeviceInfoList().`
-    pub fn new(ft_device_info: FT_DEVICE_LIST_INFO_NODE) -> Self {
+impl From<FT_DEVICE_LIST_INFO_NODE> for DevInfo {
+    fn from(ft_device_info: FT_DEVICE_LIST_INFO_NODE) -> Self {
         Self {
-            open: (ft_device_info.Flags & 0b0 != 0),
+            open: (ft_device_info.Flags & 0b01 != 0),
             high_speed_usb: (ft_device_info.Flags & 0b10 != 0),
             dev_type: DevType::from(ft_device_info.Type as u8),
             vid: ((ft_device_info.ID >> 16) & 0xFFFF) as u16,

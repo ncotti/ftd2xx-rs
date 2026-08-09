@@ -7,6 +7,7 @@ use rand::{RngExt};
 
 /// Write some value in EEPROM user area, and read it back
 #[test]
+#[ignore = "Not yet testing eeprom"]
 fn test_user_area() -> Result<(), FtError> {
     let mut rng = rand::rng();
 

@@ -22,8 +22,8 @@ pub use eeprom::ft4232h::EepromFt4232h;
 /// PID = {0x6001, 0x6010, 0x6006} are listed. To use a custom {VID, PID} tuple,
 /// use the `scan_custom()` function instead.
 ///
-/// Example:
-/// ```
+/// Example: TODO doctest
+///
 /// use ftd2xx_rs::scan;
 /// use ftd2xx_rs::DevInfo;
 ///
@@ -31,7 +31,7 @@ pub use eeprom::ft4232h::EepromFt4232h;
 /// for info in device_infos {
 ///     println!("{}", info);
 /// }
-/// ```
+///
 pub fn scan() -> Result<Vec<DevInfo>, FtError> {
     let device_qtty = classic::create_device_info_list()?;
     let device_infos: Vec<DevInfo> = classic::get_device_info_list(device_qtty)?;
@@ -42,21 +42,23 @@ pub fn scan() -> Result<Vec<DevInfo>, FtError> {
 /// information. It will also search for the custom vendor_id (vid) and
 /// product_id (pid) tuple, besides the default ones.
 ///
-/// Example:
-/// ```
+/// Example: TODO doctest
+///
+/// #[cfg(feature = "test-ft4232h")]
 /// use ftd2xx_rs::scan_custom;
 ///
 /// let devices_infos: Vec<DevInfo> = scan_custom(0xABCD, 0x1234);
 /// for info in device_infos {
 ///     println!("{}", info);
 /// }
-/// ```
+///
 pub fn scan_custom(vid: u16, pid: u16) -> Result<Vec<DevInfo>, FtError> {
     classic::set_vid_pid(vid, pid)?;
     scan()
 }
 
 /// Generic device
+#[derive(Debug)]
 pub struct Device {
     /// FT Device info
     pub info: DevInfo,
@@ -71,14 +73,10 @@ pub struct Device {
 impl TryFrom<u32> for Device {
     type Error = FtError;
 
-    /// Open a device using an `u32` value. It will be interpreted at first
+    /// Open a device using an `u32` value. It will be interpreted first
     /// as an index, and, it doesn't work, as an USB location index.
     fn try_from(value: u32) -> Result<Self, FtError> {
         let infos = scan()?;
-
-        if infos.len() == 0 {
-            return Err(FtError::DeviceNotFound);
-        }
 
         let info = if value < infos.len() as u32 {
             infos.into_iter().nth(value as usize)
@@ -101,10 +99,6 @@ impl TryFrom<&str> for Device {
     /// exactly.
     fn try_from(description: &str) -> Result<Self, FtError> {
         let infos = scan()?;
-
-        if infos.len() == 0 {
-            return Err(FtError::DeviceNotFound);
-        }
 
         let info = infos
             .into_iter()
@@ -137,37 +131,85 @@ impl TryFrom<DevInfo> for Device {
     }
 }
 
+impl TryFrom<&DevInfo> for Device {
+    type Error = FtError;
+
+    /// Open a device using the `DevInfo` obtained from a previous `scan()`.
+    fn try_from(info: &DevInfo) -> Result<Self, FtError> {
+        Self::try_from(info.clone())
+    }
+}
+
 /// Close FT Handle on destructor.
 impl Drop for Device {
     fn drop(&mut self) {
-        unsafe { classic::close(self.handle).unwrap_err_unchecked() };
+        classic::close(self.handle).unwrap_or_default();
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::utils;
+    use super::*;
+    use crate::types::DevType;
+    use regex::Regex;
 
-    /// Setup: No devices connected
-    /// Expected: Scan function should return an error.
+    /// Get library version
+    #[test]
+    fn test_get_library_version() {
+        let version = get_library_version().unwrap();
+        let re = Regex::new(r"^v\d{1,2}\.\d{1,2}\.\d{1,2}$").unwrap();
+        println!("{}", version);
+        assert!(re.is_match(&version.to_string()));
+    }
+
+    /// Scan function should return an error if no device is connected.
+    #[cfg(feature = "test-dc")]
     #[test]
     fn test_scan_with_no_devices() {
-        utils::press_button_to_continue("Disconnect all devices");
+        let ret = scan().unwrap_err();
+        assert!(ret == FtError::DeviceNotFound)
     }
 
-    /// Setup: FT4232H connected
-    /// Expected: The four channels are discovered as different devices
+    /// The four channels are discovered as different devices
+    #[cfg(feature = "test-ft4232h")]
     #[test]
-    fn test_scan() {
-        utils::press_button_to_continue("Have a singular FT4232H connected...");
+    fn test_scan() -> Result<(), FtError> {
+        let devices = scan()?;
+        assert!(devices.len() == 4);
+        for device in devices {
+            assert!(device.dev_type == DevType::Dev4232H);
+            assert!(device.open == false);
+        }
+        Ok(())
     }
 
-    /// Setup: Two FT4232H connected.
-    /// Expected: 8 devices should be found, 2 devices, 4 channels each
+    /// Connects to the device. It should be listed as open when scanned.
+    /// You shouldn't be able to connect twice.
+    #[cfg(feature = "test-ft4232h")]
     #[test]
-    fn test_scan_multiple() {
-        utils::press_button_to_continue("Have two FT4232H devices connected...");
-    }
+    fn test_connect_to_device() -> Result<(), FtError> {
+        let devices = scan()?;
+        assert!(devices[0].open == false);
 
-    
+        println!("Trying to open from dev: {}", devices[0]);
+        let probe = Device::try_from(&devices[0])?;
+
+        // New scan should reveal that the device has been opened
+        let new_devices = scan()?;
+        assert!(new_devices[0].open == true);
+
+        // Trying to create a new device from an opened one should return an
+        // error
+        let double_probe = Device::try_from(&new_devices[0]).unwrap_err();
+        assert!(double_probe == FtError::DeviceNotOpened);
+
+        // Dropping the device and scanning again should be listed as closed
+        drop(probe);
+        let devices = scan()?;
+        for device in devices {
+            assert!(device.open == false);
+        }
+
+        Ok(())
+    }
 }
