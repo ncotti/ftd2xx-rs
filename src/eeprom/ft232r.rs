@@ -2,7 +2,7 @@
 //! * FT232R
 
 use crate::eeprom::{DevType, Eeprom, EepromHeader, EepromStrings};
-use ftd2xx_sys::FT_EEPROM_232R;
+use ftd2xx_sys::d2xx::FT_EEPROM_232R;
 
 /// FT4232H EEPROM configuration.
 #[derive(Debug, Clone)]

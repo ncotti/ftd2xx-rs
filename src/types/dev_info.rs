@@ -2,7 +2,7 @@
 
 use crate::types::dev_type::DevType;
 use crate::utils::i8_array_to_string;
-use ftd2xx_sys::FT_DEVICE_LIST_INFO_NODE;
+use ftd2xx_sys::d2xx;
 use std::fmt;
 
 /// Default Vendor ID for FTDI
@@ -41,8 +41,8 @@ pub struct DevInfo {
     pub description: String,
 }
 
-impl From<FT_DEVICE_LIST_INFO_NODE> for DevInfo {
-    fn from(ft_device_info: FT_DEVICE_LIST_INFO_NODE) -> Self {
+impl From<d2xx::FT_DEVICE_LIST_INFO_NODE> for DevInfo {
+    fn from(ft_device_info: d2xx::FT_DEVICE_LIST_INFO_NODE) -> Self {
         Self {
             open: (ft_device_info.Flags & 0b01 != 0),
             high_speed_usb: (ft_device_info.Flags & 0b10 != 0),

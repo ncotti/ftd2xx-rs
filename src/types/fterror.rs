@@ -1,7 +1,7 @@
 //! FT errors. These error codes match the `FT_STATUS` return values from
 //! the FTD2XX library functions.
 
-use ftd2xx_sys::*;
+use ftd2xx_sys::d2xx;
 use std::convert::TryFrom;
 use thiserror::Error;
 
@@ -11,41 +11,41 @@ use thiserror::Error;
 #[repr(u32)]
 pub enum FtError {
     #[error("FT_INVALID_HANDLE")]
-    InvalidHandle = FT_INVALID_HANDLE as u32,
+    InvalidHandle = d2xx::FT_INVALID_HANDLE as u32,
     #[error("FT_DEVICE_NOT_FOUND")]
-    DeviceNotFound = FT_DEVICE_NOT_FOUND as u32,
+    DeviceNotFound = d2xx::FT_DEVICE_NOT_FOUND as u32,
     #[error("FT_DEVICE_NOT_OPENED")]
-    DeviceNotOpened = FT_DEVICE_NOT_OPENED as u32,
+    DeviceNotOpened = d2xx::FT_DEVICE_NOT_OPENED as u32,
     #[error("FT_IO_ERROR")]
-    IOError = FT_IO_ERROR as u32,
+    IOError = d2xx::FT_IO_ERROR as u32,
     #[error("FT_INSUFFICIENT_RESOURCES")]
-    InsufficientResources = FT_INSUFFICIENT_RESOURCES as u32,
+    InsufficientResources = d2xx::FT_INSUFFICIENT_RESOURCES as u32,
     #[error("FT_INVALID_PARAMETER")]
-    InvalidParameter = FT_INVALID_PARAMETER as u32,
+    InvalidParameter = d2xx::FT_INVALID_PARAMETER as u32,
     #[error("FT_INVALID_BAUD_RATE")]
-    InvalidBaudRate = FT_INVALID_BAUD_RATE as u32,
+    InvalidBaudRate = d2xx::FT_INVALID_BAUD_RATE as u32,
     #[error("FT_DEVICE_NOT_OPENED_FOR_ERASE")]
-    DeviceNotOpenedForErase = FT_DEVICE_NOT_OPENED_FOR_ERASE as u32,
+    DeviceNotOpenedForErase = d2xx::FT_DEVICE_NOT_OPENED_FOR_ERASE as u32,
     #[error("FT_DEVICE_NOT_OPENED_FOR_WRITE")]
-    DeviceNotOpenedForWrite = FT_DEVICE_NOT_OPENED_FOR_WRITE as u32,
+    DeviceNotOpenedForWrite = d2xx::FT_DEVICE_NOT_OPENED_FOR_WRITE as u32,
     #[error("FT_FAILED_TO_WRITE_DEVICE")]
-    FailedToWriteDevice = FT_FAILED_TO_WRITE_DEVICE as u32,
+    FailedToWriteDevice = d2xx::FT_FAILED_TO_WRITE_DEVICE as u32,
     #[error("FT_EEPROM_READ_FAILED")]
-    EepromReadFailed = FT_EEPROM_READ_FAILED as u32,
+    EepromReadFailed = d2xx::FT_EEPROM_READ_FAILED as u32,
     #[error("FT_EEPROM_WRITE_FAILED")]
-    EepromWriteFailed = FT_EEPROM_WRITE_FAILED as u32,
+    EepromWriteFailed = d2xx::FT_EEPROM_WRITE_FAILED as u32,
     #[error("FT_EEPROM_ERASE_FAILED")]
-    EepromEraseFailed = FT_EEPROM_ERASE_FAILED as u32,
+    EepromEraseFailed = d2xx::FT_EEPROM_ERASE_FAILED as u32,
     #[error("FT_EEPROM_NOT_PRESENT")]
-    EepromNotPresent = FT_EEPROM_NOT_PRESENT as u32,
+    EepromNotPresent = d2xx::FT_EEPROM_NOT_PRESENT as u32,
     #[error("FT_EEPROM_NOT_PROGRAMMED")]
-    EepromNotProgramed = FT_EEPROM_NOT_PROGRAMMED as u32,
+    EepromNotProgramed = d2xx::FT_EEPROM_NOT_PROGRAMMED as u32,
     #[error("FT_INVALID_ARGS")]
-    InvalidArgs = FT_INVALID_ARGS as u32,
+    InvalidArgs = d2xx::FT_INVALID_ARGS as u32,
     #[error("FT_INVAFT_NOT_SUPPORTEDLID_HANDLE")]
-    NotSupported = FT_NOT_SUPPORTED as u32,
+    NotSupported = d2xx::FT_NOT_SUPPORTED as u32,
     #[error("FT_OTHER_ERROR")]
-    OtherError = FT_OTHER_ERROR as u32,
+    OtherError = d2xx::FT_OTHER_ERROR as u32,
 }
 
 impl TryFrom<u32> for FtError {
@@ -83,7 +83,7 @@ impl TryFrom<u32> for FtError {
 macro_rules! ft_try {
     ($expr:expr) => {{
         let status = unsafe { $expr };
-        if status != FT_OK {
+        if status != d2xx::FT_OK {
             return Err(FtError::try_from(status).unwrap());
         }
     }};

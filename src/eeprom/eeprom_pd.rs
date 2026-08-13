@@ -1,6 +1,6 @@
 //! Doc
 
-use ftd2xx_sys::{FT_EEPROM_PD, FT_EEPROM_PD_PDO_mv_ma};
+use ftd2xx_sys::d2xx::{FT_EEPROM_PD, FT_EEPROM_PD_PDO_mv_ma};
 
 /// Common Power Delivery Output (PDO) currents and voltages.
 #[derive(Debug, Clone, Default)]

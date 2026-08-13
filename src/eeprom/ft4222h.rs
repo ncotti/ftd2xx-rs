@@ -2,7 +2,7 @@
 //! * FT4222H
 
 use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromStrings};
-use ftd2xx_sys::FT_EEPROM_4222H;
+use ftd2xx_sys::d2xx::FT_EEPROM_4222H;
 
 /// FT4232H EEPROM configuration.
 #[derive(Debug, Clone)]

@@ -5,7 +5,7 @@
 
 use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromPD, EepromStrings};
 
-use ftd2xx_sys::{FT_EEPROM_2232H, FT_EEPROM_2232HP, FT_EEPROM_2233HP};
+use ftd2xx_sys::d2xx::{FT_EEPROM_2232H, FT_EEPROM_2232HP, FT_EEPROM_2233HP};
 
 /// FT2232H EEPROM configuration.
 #[derive(Debug, Clone)]

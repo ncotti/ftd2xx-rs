@@ -1,7 +1,7 @@
 //! Doc
 
 use crate::types::{DevType, FT_DEFAULT_PRODUCT_ID, FT_DEFAULT_VENDOR_ID};
-use ftd2xx_sys::FT_EEPROM_HEADER;
+use ftd2xx_sys::d2xx::FT_EEPROM_HEADER;
 
 /// Common EEPROM header used for all devices, based on the `FT_EEPROM_HEADER`.
 #[derive(Debug, Clone)]

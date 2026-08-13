@@ -1,7 +1,7 @@
 //! EEPROM structures for the following devices:
 //! * FTXSeries
 
-use ftd2xx_sys::FT_EEPROM_X_SERIES;
+use ftd2xx_sys::d2xx::FT_EEPROM_X_SERIES;
 
 use crate::eeprom::{DevType, DriveCurrent, Eeprom, EepromHeader, EepromStrings};
 

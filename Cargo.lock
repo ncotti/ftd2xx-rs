@@ -101,9 +101,9 @@ dependencies = [
 
 [[package]]
 name = "ftd2xx-sys"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f624105446cf5b0a59ebef869521b27a590a87fd1065a010cfc4d3a236ed3bc"
+checksum = "830ea807488965bc7a74efb0bd00834543aa805d56441e61cb8e9f73e50658d4"
 dependencies = [
  "bindgen",
 ]

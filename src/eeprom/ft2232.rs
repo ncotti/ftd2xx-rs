@@ -1,7 +1,7 @@
 //! EEPROM structures for the following devices:
 //! * FT2232
 
-use ftd2xx_sys::FT_EEPROM_2232;
+use ftd2xx_sys::d2xx::FT_EEPROM_2232;
 
 use crate::eeprom::{DevType, Eeprom, EepromHeader, EepromStrings};
 
