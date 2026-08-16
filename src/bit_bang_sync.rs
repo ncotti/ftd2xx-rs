@@ -21,6 +21,7 @@ impl TryFrom<u32> for BitBangerSync {
         let device = Device::try_from(value)?;
         classic::set_bit_mode(device.handle, 0, BitMode::SyncBitBang)?;
         classic::set_baud_rate(device.handle, 115200)?;
+        classic::purge(device.handle, true, true)?;
         Ok(Self {
             device: device,
             pin_dirs: [PinDir::Input; 8],
@@ -35,6 +36,7 @@ impl TryFrom<&str> for BitBangerSync {
         let device = Device::try_from(description)?;
         classic::set_bit_mode(device.handle, 0, BitMode::SyncBitBang)?;
         classic::set_baud_rate(device.handle, 115200)?;
+        classic::purge(device.handle, true, true)?;
         Ok(Self {
             device: device,
             pin_dirs: [PinDir::Input; 8],
@@ -49,6 +51,7 @@ impl TryFrom<String> for BitBangerSync {
         let device = Device::try_from(description)?;
         classic::set_bit_mode(device.handle, 0, BitMode::SyncBitBang)?;
         classic::set_baud_rate(device.handle, 115200)?;
+        classic::purge(device.handle, true, true)?;
         Ok(Self {
             device: device,
             pin_dirs: [PinDir::Input; 8],
@@ -63,6 +66,7 @@ impl TryFrom<DevInfo> for BitBangerSync {
         let device = Device::try_from(info)?;
         classic::set_bit_mode(device.handle, 0, BitMode::SyncBitBang)?;
         classic::set_baud_rate(device.handle, 115200)?;
+        classic::purge(device.handle, true, true)?;
         Ok(Self {
             device: device,
             pin_dirs: [PinDir::Input; 8],
@@ -77,6 +81,7 @@ impl TryFrom<&DevInfo> for BitBangerSync {
         let device = Device::try_from(info)?;
         classic::set_bit_mode(device.handle, 0, BitMode::SyncBitBang)?;
         classic::set_baud_rate(device.handle, 115200)?;
+        classic::purge(device.handle, true, true)?;
         Ok(Self {
             device: device,
             pin_dirs: [PinDir::Input; 8],
@@ -238,9 +243,8 @@ impl BitBangerSync {
 #[cfg(test)]
 mod tests {
 
-    use std::thread::sleep_ms;
-
-    use regex::bytes;
+    use core::time;
+    use std::thread::sleep;
 
     use super::*;
 
@@ -263,7 +267,7 @@ mod tests {
             chb.set_input(i)?;
         }
 
-        // There should be not values to be read at start
+        // There should be no values to be read at the start
         assert!(cha.read_qtty()? == 0);
         assert!(chb.read_qtty()? == 0);
 
@@ -271,26 +275,25 @@ mod tests {
         let zeros: Vec<u8> = vec![0x00];
         cha.write_all(&zeros)?;
         chb.write_all(&zeros)?;
+        sleep(time::Duration::from_secs(1));
 
-        // Since we wrote 1 byte, there should be one value to be read on both channels
-        // Discard it, since we can't make assumption on the initial state
+        // Since we wrote 1 byte, there should be one value to be read
+        // on both channels.
+        // Discard it, since we can't make assumptions on the initial state.
         assert!(cha.read_all(1)?.len() == 1);
         assert!(chb.read_all(1)?.len() == 1);
 
-        classic::purge(cha.device.handle, true, true)?;
-        classic::purge(chb.device.handle, true, true)?;
-
-        // Write a series of bytes in cha
+        // Write a series of bytes in channel A
         let sequence: Vec<u8> = vec![0xAA, 0xBB, 0xCC];
-        assert!(cha.write_all(&sequence)? == 3);
-        sleep_ms(500);
-        dbg!(cha.read_qtty()?);
+        assert!(cha.write_all(&sequence)? == sequence.len() as u32);
+        sleep(time::Duration::from_secs(1));
+
         assert!(cha.read_qtty()? == 3);
         let bytes_read = cha.read_all(0)?;
-        dbg!(&bytes_read);
         assert!(bytes_read.len() == 3);
 
-        // Since the read operations are always "one byte" behind...
+        // Since the read operations are always "one byte" behind, we expect
+        // the first value to be all zeros
         assert!(bytes_read[0] == 0x00);
         assert!(bytes_read[1] == 0xA0);
         assert!(bytes_read[2] == 0xB0);
@@ -299,37 +302,34 @@ mod tests {
         let bytes_read = cha.read_all(1)?;
         assert!(bytes_read[0] == 0xC0);
 
-        // Now, let's repeat with channel B (which should see the "C" written
-        // from channel A)
+        // Now, let's repeat with channel B, which should see the "0x0C"
+        // written from channel A.
         assert!(chb.read_qtty()? == 0);
         let sequence: Vec<u8> = vec![1, 0, 1];
         assert!(chb.write(0, &sequence)? == 3);
         assert!(chb.write(1, &sequence)? == 3);
-        sleep_ms(500);
+        sleep(time::Duration::from_secs(1));
 
-        // Remember that reading is one off (writes current, reads previous)
-        dbg!(chb.read_qtty()?);
         assert!(chb.read_qtty()? == 6);
+
+        // Read synch from channel B
         let bytes_read = chb.read_all(4)?;
         assert!(bytes_read[0] == 0xC0);
         assert!(bytes_read[1] == 0xC1);
         assert!(bytes_read[2] == 0xC0);
         assert!(bytes_read[3] == 0xC1);
 
-        // Single byte reading
         assert!(chb.read_qtty()? == 2);
-        let bytes_read = chb.read(1, 1)?;
+        let bytes_read = chb.read(1, 3)?;
         assert!(bytes_read[0] == 0x1);
+        assert!(bytes_read[1] == 0x0);
+        assert!(bytes_read[2] == 0x1);
 
-        assert!(chb.read_qtty()? == 1);
-        let bytes_read = chb.read_all(2)?;
-        assert!(bytes_read[0] == 0xC1);
-        assert!(bytes_read[1] == 0xC3);
-
-        // The "read force" should have preserved the value "0x3C" at the output,
-        // so that values should be read by the channel A
+        // Check that both channel A and B have the right values
         let bytes_read = cha.read_all(1)?;
-        dbg!(&bytes_read);
+        assert!(bytes_read[0] == 0xC3);
+
+        let bytes_read = chb.read_all(1)?;
         assert!(bytes_read[0] == 0xC3);
 
         Ok(())
