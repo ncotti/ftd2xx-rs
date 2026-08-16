@@ -46,6 +46,10 @@ pub enum FtError {
     NotSupported = d2xx::FT_NOT_SUPPORTED as u32,
     #[error("FT_OTHER_ERROR")]
     OtherError = d2xx::FT_OTHER_ERROR as u32,
+
+    // The following errors are custom made
+    #[error("Trying to write a GPIO input")]
+    WriteGPIOInput = 19 as u32,
 }
 
 impl TryFrom<u32> for FtError {

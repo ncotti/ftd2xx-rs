@@ -246,16 +246,18 @@ pub fn read(ft_handle: FtHandle, bytes_to_read: u32) -> Result<Vec<u8>, FtError>
         bytes_to_read,
         &mut bytes_read
     ));
+    unsafe { bytes.set_len(bytes_read as usize) };
     Ok(bytes)
 }
 
 /// 3.11 FT_Write
-pub fn write(ft_handle: FtHandle, data: &mut Vec<u8>) -> Result<u32, FtError> {
+pub fn write(ft_handle: FtHandle, data: &Vec<u8>) -> Result<u32, FtError> {
     let mut bytes_written: u32 = 0;
     let bytes_to_be_written: u32 = data.len() as u32;
+    let mut bytes = data.clone();
     ft_try!(d2xx::FT_Write(
         ft_handle,
-        data.as_mut_ptr().cast(),
+        bytes.as_mut_ptr().cast(),
         bytes_to_be_written,
         &mut bytes_written
     ));
