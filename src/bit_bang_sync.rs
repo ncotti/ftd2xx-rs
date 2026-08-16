@@ -8,7 +8,14 @@ use crate::classic;
 use crate::BitMode;
 use crate::bit_bang::PinDir;
 
-/// An FTDI device configured in synchronous bit-bang mode
+/// An FTDI device configured in synchronous bit-bang mode.
+/// Synchronous Bit-Bang mode works like this:
+///
+/// Whenever a write operation is issued, a read operation is triggered right
+/// before. E.g.
+/// Write buffer: 0x00 0xAA 0xBB 0xCC 0xDD 0xEE 0xFF
+/// Read buffer:  xxxx 0x00 0xAA 0xBB 0xCC 0xDD 0xEE
+
 pub struct BitBangerSync {
     device: Device,
     pin_dirs: [PinDir; 8],
@@ -97,24 +104,39 @@ impl BitBangerSync {
         Ok(device)
     }
 
-    /// Returns the amount of available bytes to be read from the RXQueue.
-    pub fn read_qtty(&self) -> Result<u32, FtError> {
+    /// Returns number of available bytes to be read from the Rx queue.
+    ///
+    /// Each time a write operation is performed, a read operation is issued
+    /// right before any electrical values are changed at the output.
+    /// Therefore, there will be as much bytes available as write
+    /// operations had been performed.
+    ///
+    /// Note: there is usually a 500ms to a 1s delay between a value being
+    /// written and the read value being available.
+    pub fn len(&self) -> Result<u32, FtError> {
         let bytes_to_be_read = classic::get_queue_status(self.device.handle)?;
         Ok(bytes_to_be_read)
     }
 
-    /// Reads all GPIO pins defined as inputs, as much times as `bytes_to_read`
-    /// is possible.
+    /// Reads all GPIO pins values stored in the Rx queue.
     ///
-    /// If `bytes_to_read == 0`, it will read as much data as possible.
+    /// * `bytes_to_read`: How many bytes should be read:
+    ///     * If `bytes_to_read == 0`, it will read all data available.
+    ///     * If `0 < bytes_to_read <= Rx queue len`, it will read that amount.
+    ///     * If `bytes_to_read > Rx queue len`, i.e., more data has been
+    ///     requested than available, the current electrical state of the bus
+    ///     will be sampled and written back, so that the Rx queue gets filled
+    ///     with the current electrical state.
     ///
-    /// Returns an u8 vector, where each bit corresponds to the electrical
-    /// value of the pin (MSB is pin 7, LSB is pin 0).
-    /// If a pin is defined as an output, the value set will be returned.
-    /// The size of the output might be less (or zero), depending on the
-    /// available data.
+    /// The 8-bit values returned correspond to the GPIO pins' electrical state
+    /// (MSB(7) ... LSB(0)) right before any write operation is performed.
+    ///
+    /// A normal use case is to read `N+1` values, where the first value
+    /// corresponds to the initial state of the bus, before any operation
+    /// is performed, and the last value is the response from the last
+    /// transaction.
     pub fn read_all(&self, bytes_to_read: u32) -> Result<Vec<u8>, FtError> {
-        let available_bytes = self.read_qtty()?;
+        let available_bytes = self.len()?;
 
         // If zero, read as much data as available
         let bytes_to_read = if bytes_to_read == 0 {
@@ -136,10 +158,19 @@ impl BitBangerSync {
         Ok(bytes_read)
     }
 
-    /// Reads all GPIO pins defined as inputs, as much times as `bytes_to_read`
-    /// is possible.
-    /// The value read is only updated after the next baud rate tick.
-    /// If the pin was defined as an output, the value set will be returned.
+    /// Reads a single GPIO pin value stored in the Rx queue.
+    ///
+    /// * `pin`: `[0;7]` GPIO pin number.
+    /// * `bytes_to_read`: How many bytes should be read:
+    ///     * If `bytes_to_read == 0`, it will read all data available.
+    ///     * If `0 < bytes_to_read <= Rx queue len`, it will read that amount.
+    ///     * If `bytes_to_read > Rx queue len`, i.e., more data has been
+    ///     requested than available, the current electrical state of the bus
+    ///     will be sampled and written back, so that the Rx queue gets filled
+    ///     with the current electrical state.
+    ///
+    /// The returned value will be "0" or "1" depending if the electrical line
+    /// was "LOW" or "HIGH" just before the last write operation.
     pub fn read(&self, pin: u8, bytes_to_read: u32) -> Result<Vec<u8>, FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
@@ -151,20 +182,30 @@ impl BitBangerSync {
         Ok(gpio_bytes)
     }
 
-    /// Writes all GPIO pins.
+    /// Writes all GPIO pins synchronously.
     ///
-    /// It receives an 8-bit values, where each bit maps to a GPIO pin. If a
-    /// pin was not set as an output, then its value will be ignored.
+    /// * `bytes`: 8-bit values, where each bit corresponds to the
+    /// electrical value of a pin (MSB(7) ... LSB(0)). If a pin was not set
+    /// as an output, then the bit value in that position will be ignored.
+    ///
+    /// Returns the number of bytes actually written, which can be less than
+    /// the specified amount if the Tx queue is full.
     pub fn write_all(&self, bytes: &Vec<u8>) -> Result<u32, FtError> {
         let bytes_written = classic::write(self.device.handle, &bytes)?;
         Ok(bytes_written)
     }
 
-    /// Writes a GPIO pin.
+    /// Writes a single GPIO pin synchronously.
     ///
-    /// The value will be written after the next baud rate tick.
-    /// An error will be returned if trying to write a GPIO which was set as
-    /// input.
+    /// * `pin`: `[0;7]` GPIO pin number.
+    /// * `bytes`: Values to be written to the given GPIO pin. All other GPIO
+    /// electrical values will be preserved.
+    ///
+    /// Returns the number of bytes actually written, which can be less than
+    /// the specified amount if the Tx queue is full.
+    ///
+    /// An `FtError::WriteGPIOInput` will be returned if trying to write a
+    /// GPIO which was set as input.
     pub fn write(&self, pin: u8, bytes: &Vec<u8>) -> Result<u32, FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
@@ -174,8 +215,9 @@ impl BitBangerSync {
             return Err(FtError::WriteGPIOInput);
         }
 
+        // Read current electrical state of all other pins, and only modify
+        // the given pin.
         let mut pin_values = vec![classic::get_bit_mode(self.device.handle)?; bytes.len()];
-
         for (byte, pin_value) in std::iter::zip(bytes.iter(), pin_values.iter_mut()) {
             if *byte != 0 {
                 *pin_value |= 1 << pin;
@@ -189,6 +231,8 @@ impl BitBangerSync {
     }
 
     /// Sets a GPIO pin as an input.
+    ///
+    /// * `pin`: `[0;7]` GPIO pin number.
     pub fn set_input(&mut self, pin: u8) -> Result<(), FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
@@ -199,6 +243,8 @@ impl BitBangerSync {
     }
 
     /// Sets a GPIO pin as an output.
+    ///
+    /// * `pin`: `[0;7]` GPIO pin number.
     pub fn set_output(&mut self, pin: u8) -> Result<(), FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
@@ -209,6 +255,8 @@ impl BitBangerSync {
     }
 
     /// Returns the current pin direction (Input or Output).
+    ///
+    /// * `pin`: `[0;7]` GPIO pin number.
     pub fn get_pin_dir(&self, pin: u8) -> Result<PinDir, FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
@@ -268,8 +316,8 @@ mod tests {
         }
 
         // There should be no values to be read at the start
-        assert!(cha.read_qtty()? == 0);
-        assert!(chb.read_qtty()? == 0);
+        assert!(cha.len()? == 0);
+        assert!(chb.len()? == 0);
 
         // Write all zeros in both devices
         let zeros: Vec<u8> = vec![0x00];
@@ -288,7 +336,7 @@ mod tests {
         assert!(cha.write_all(&sequence)? == sequence.len() as u32);
         sleep(time::Duration::from_secs(1));
 
-        assert!(cha.read_qtty()? == 3);
+        assert!(cha.len()? == 3);
         let bytes_read = cha.read_all(0)?;
         assert!(bytes_read.len() == 3);
 
@@ -304,13 +352,13 @@ mod tests {
 
         // Now, let's repeat with channel B, which should see the "0x0C"
         // written from channel A.
-        assert!(chb.read_qtty()? == 0);
+        assert!(chb.len()? == 0);
         let sequence: Vec<u8> = vec![1, 0, 1];
         assert!(chb.write(0, &sequence)? == 3);
         assert!(chb.write(1, &sequence)? == 3);
         sleep(time::Duration::from_secs(1));
 
-        assert!(chb.read_qtty()? == 6);
+        assert!(chb.len()? == 6);
 
         // Read synch from channel B
         let bytes_read = chb.read_all(4)?;
@@ -319,7 +367,7 @@ mod tests {
         assert!(bytes_read[2] == 0xC0);
         assert!(bytes_read[3] == 0xC1);
 
-        assert!(chb.read_qtty()? == 2);
+        assert!(chb.len()? == 2);
         let bytes_read = chb.read(1, 3)?;
         assert!(bytes_read[0] == 0x1);
         assert!(bytes_read[1] == 0x0);
