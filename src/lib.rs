@@ -9,6 +9,7 @@ pub mod types;
 pub mod utils;
 
 pub mod bit_bang;
+pub mod bit_bang_sync;
 
 /// FtHandle is a void* FT_HANDLE. It is used to manage any FT device.
 pub type FtHandle = ftd2xx_sys::d2xx::FT_HANDLE;

@@ -9,7 +9,11 @@ use crate::{
 
 use crate::eeprom::Eeprom;
 
-use ftd2xx_sys::d2xx;
+use ftd2xx_sys::d2xx::{
+    self, FT_BITMODE_ASYNC_BITBANG, FT_BITMODE_CBUS_BITBANG, FT_BITMODE_FAST_SERIAL,
+    FT_BITMODE_MCU_HOST, FT_BITMODE_MPSSE, FT_BITMODE_RESET, FT_BITMODE_SYNC_BITBANG,
+    FT_BITMODE_SYNC_FIFO,
+};
 
 use std::ffi::c_void;
 
@@ -73,14 +77,14 @@ pub struct EventCause {
 #[repr(u8)]
 #[allow(missing_docs)]
 pub enum BitMode {
-    Reset = 0x0,
-    AsyncBitBang = 0x1,
-    MPSSE = 0x2,
-    SyncBitBang = 0x4,
-    MCUHostBusEmulation = 0x8,
-    FastOptoIsolatedSerial = 0x10,
-    CBUSBitBang = 0x20,
-    SingleChannelSync245FIFOMode = 0x40,
+    Reset = FT_BITMODE_RESET as u8,
+    AsyncBitBang = FT_BITMODE_ASYNC_BITBANG as u8,
+    MPSSE = FT_BITMODE_MPSSE as u8,
+    SyncBitBang = FT_BITMODE_SYNC_BITBANG as u8,
+    MCUHostBusEmulation = FT_BITMODE_MCU_HOST as u8,
+    FastOptoIsolatedSerial = FT_BITMODE_FAST_SERIAL as u8,
+    CBUSBitBang = FT_BITMODE_CBUS_BITBANG as u8,
+    SingleChannelSync245FIFOMode = FT_BITMODE_SYNC_FIFO as u8,
 }
 
 /// 3.1 FT_SetVIDPID
