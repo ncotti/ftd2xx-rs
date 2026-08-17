@@ -2,7 +2,7 @@
 
 use crate::types::dev_type::DevType;
 use crate::utils::i8_array_to_string;
-use ftd2xx_sys::d2xx;
+use ftd2xx_sys::{d2xx, mpsse_i2c, mpsse_spi};
 use std::fmt;
 
 /// Default Vendor ID for FTDI
@@ -43,6 +43,36 @@ pub struct DevInfo {
 
 impl From<d2xx::FT_DEVICE_LIST_INFO_NODE> for DevInfo {
     fn from(ft_device_info: d2xx::FT_DEVICE_LIST_INFO_NODE) -> Self {
+        Self {
+            open: (ft_device_info.Flags & 0b01 != 0),
+            high_speed_usb: (ft_device_info.Flags & 0b10 != 0),
+            dev_type: DevType::from(ft_device_info.Type as u8),
+            vid: ((ft_device_info.ID >> 16) & 0xFFFF) as u16,
+            pid: (ft_device_info.ID & 0xFFFF) as u16,
+            usb_location_id: ft_device_info.LocId,
+            serial_number: i8_array_to_string(&ft_device_info.SerialNumber),
+            description: i8_array_to_string(&ft_device_info.Description),
+        }
+    }
+}
+
+impl From<mpsse_i2c::FT_DEVICE_LIST_INFO_NODE> for DevInfo {
+    fn from(ft_device_info: mpsse_i2c::FT_DEVICE_LIST_INFO_NODE) -> Self {
+        Self {
+            open: (ft_device_info.Flags & 0b01 != 0),
+            high_speed_usb: (ft_device_info.Flags & 0b10 != 0),
+            dev_type: DevType::from(ft_device_info.Type as u8),
+            vid: ((ft_device_info.ID >> 16) & 0xFFFF) as u16,
+            pid: (ft_device_info.ID & 0xFFFF) as u16,
+            usb_location_id: ft_device_info.LocId,
+            serial_number: i8_array_to_string(&ft_device_info.SerialNumber),
+            description: i8_array_to_string(&ft_device_info.Description),
+        }
+    }
+}
+
+impl From<mpsse_spi::FT_DEVICE_LIST_INFO_NODE> for DevInfo {
+    fn from(ft_device_info: mpsse_spi::FT_DEVICE_LIST_INFO_NODE) -> Self {
         Self {
             open: (ft_device_info.Flags & 0b01 != 0),
             high_speed_usb: (ft_device_info.Flags & 0b10 != 0),

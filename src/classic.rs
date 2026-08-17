@@ -15,19 +15,12 @@ use ftd2xx_sys::d2xx::{
     FT_BITMODE_SYNC_FIFO,
 };
 
-use std::ffi::c_void;
+use ftd2xx_sys::mpsse_i2c;
+use ftd2xx_sys::mpsse_spi;
+
+use std::{ffi::c_void, ptr::null_mut};
 
 use crate::utils;
-
-/// Describes an UART interface
-pub struct UartInfo {
-    /// Parity bit
-    pub parity: Parity,
-    /// DAta bits
-    pub bits: BitsPerWord,
-    /// Stop bits
-    pub stop_bits: StopBits,
-}
 
 /// Parity bit
 #[repr(u8)]
@@ -698,4 +691,143 @@ pub fn set_usb_parameters(
         out_transfer_size
     ));
     Ok(())
+}
+
+#[repr(u32)]
+pub enum I2cClockRate {
+    /// 100 KHz
+    Standard = mpsse_i2c::I2C_ClockRate_t_I2C_CLOCK_STANDARD_MODE,
+    /// 400 KHz
+    Fast = mpsse_i2c::I2C_ClockRate_t_I2C_CLOCK_FAST_MODE,
+    /// 1 MHz
+    FastPlus = mpsse_i2c::I2C_ClockRate_t_I2C_CLOCK_FAST_MODE_PLUS,
+    /// 3.4 MHz
+    HighSpeed = mpsse_i2c::I2C_ClockRate_t_I2C_CLOCK_HIGH_SPEED_MODE,
+}
+
+/// 3.1.1 I2C_GetNumChannels
+pub fn i2c_get_num_channels() -> Result<u32, FtError> {
+    let mut num_channels: u32 = 0;
+    ft_try!(mpsse_i2c::I2C_GetNumChannels(&mut num_channels));
+    Ok(num_channels)
+}
+
+/// 3.1.2 I2C_GetChannelInfo
+pub fn i2c_get_channel_info(index: u32) -> Result<DevInfo, FtError> {
+    let mut ft_device_info: mpsse_i2c::FT_DEVICE_LIST_INFO_NODE =
+        mpsse_i2c::FT_DEVICE_LIST_INFO_NODE {
+            Flags: 0,
+            Type: 0,
+            ID: 0,
+            LocId: 0,
+            SerialNumber: [0; 16],
+            Description: [0; 64],
+            ftHandle: std::ptr::null_mut(),
+        };
+
+    ft_try!(mpsse_i2c::I2C_GetChannelInfo(index, &mut ft_device_info));
+
+    let info = DevInfo::from(ft_device_info);
+    Ok(info)
+}
+
+/// 3.1.3 I2C_OpenChannel
+pub fn i2c_open_channel(index: u32) -> Result<FtHandle, FtError> {
+    let mut handle: FtHandle = null_mut();
+    ft_try!(mpsse_i2c::I2C_OpenChannel(index, &mut handle));
+    Ok(handle)
+}
+
+/// 3.1.4 I2C_InitChannel
+pub fn i2c_init_channel(
+    handle: FtHandle,
+    clock_rate: I2cClockRate,
+    latency_timer: u8,
+    phase_clocking: bool,
+    drive_only_zero: bool,
+) -> Result<(), FtError> {
+    let options: u32 = ((drive_only_zero as u32) << 1) | ((phase_clocking as u32) << 0);
+
+    let mut config = mpsse_i2c::ChannelConfig {
+        ClockRate: clock_rate as u32,
+        LatencyTimer: latency_timer,
+        Options: options,
+        Pin: 0,
+        currentPinState: 0,
+    };
+    ft_try!(mpsse_i2c::I2C_InitChannel(handle, &mut config));
+    Ok(())
+}
+
+/// 3.1.5 I2C_CloseChannel
+pub fn i2c_close_channel(handle: FtHandle) -> Result<(), FtError> {
+    ft_try!(mpsse_i2c::I2C_CloseChannel(handle));
+    Ok(())
+}
+
+/// 3.1.6 I2C_DeviceRead
+pub fn i2c_device_read(
+    handle: FtHandle,
+    addr: u8,
+    size: usize,
+    options: u32,
+) -> Result<Vec<u8>, FtError> {
+    let mut bytes_read: u32 = 0;
+    let mut data: Vec<u8> = Vec::new();
+    data.reserve_exact(size);
+
+    ft_try!(mpsse_i2c::I2C_DeviceRead(
+        handle,
+        addr,
+        size as u32,
+        data.as_mut_ptr(),
+        &mut bytes_read,
+        options
+    ));
+
+    unsafe { data.set_len(bytes_read as usize) };
+    Ok(data)
+}
+
+/// 3.1.7 I2C_DeviceWrite
+pub fn i2c_device_write(
+    handle: FtHandle,
+    addr: u8,
+    data: &Vec<u8>,
+    options: u32,
+) -> Result<usize, FtError> {
+    let mut bytes_written: u32 = 0;
+    let mut data = data.clone();
+    ft_try!(mpsse_i2c::I2C_DeviceWrite(
+        handle,
+        addr,
+        data.len() as u32,
+        data.as_mut_ptr(),
+        &mut bytes_written,
+        options
+    ));
+    Ok(bytes_written as usize)
+}
+
+/// 3.2.1 FT_WriteGPIO
+pub fn write_gpio(handle: FtHandle, dir: u8, value: u8) -> Result<(), FtError> {
+    ft_try!(mpsse_i2c::FT_WriteGPIO(handle, dir, value));
+    Ok(())
+}
+
+/// 3.2.2 FT_ReadGPIO
+pub fn read_gpio(handle: FtHandle) -> Result<u8, FtError> {
+    let mut value: u8 = 0;
+    ft_try!(mpsse_i2c::FT_ReadGPIO(handle, &mut value));
+    Ok(value)
+}
+
+/// 3.3.1 Init_libMPSSE
+pub fn init_lib_mpsse() {
+    unsafe { mpsse_i2c::Init_libMPSSE() };
+}
+
+/// 3.3.2 Cleanup_libMPSSE
+pub fn cleanup_lib_mpsse() {
+    unsafe { mpsse_i2c::Cleanup_libMPSSE() };
 }
