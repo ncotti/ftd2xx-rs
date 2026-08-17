@@ -31,6 +31,7 @@ pub struct UartInfo {
 
 /// Parity bit
 #[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 #[allow(missing_docs)]
 pub enum Parity {
     None = 0,
@@ -42,6 +43,7 @@ pub enum Parity {
 
 /// Bits per word in UART transaction
 #[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum BitsPerWord {
     /// Seven bits
     Bits7 = 7,
@@ -51,6 +53,7 @@ pub enum BitsPerWord {
 
 /// Number of stop bits per UART transaction
 #[repr(u8)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum StopBits {
     /// One stop bit
     StopBits1 = 0,
@@ -60,6 +63,7 @@ pub enum StopBits {
 
 #[repr(u16)]
 #[allow(missing_docs)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum FlowControl {
     None = d2xx::FT_FLOW_NONE as u16,
     RtsCts = d2xx::FT_FLOW_RTS_CTS as u16,
@@ -240,14 +244,14 @@ pub fn close(ft_handle: FtHandle) -> Result<(), FtError> {
 }
 
 /// 3.10 FT_Read
-pub fn read(ft_handle: FtHandle, bytes_to_read: u32) -> Result<Vec<u8>, FtError> {
+pub fn read(ft_handle: FtHandle, bytes_to_read: usize) -> Result<Vec<u8>, FtError> {
     let mut bytes_read: u32 = 0;
     let mut bytes: Vec<u8> = Vec::new();
     bytes.reserve_exact(bytes_to_read as usize);
     ft_try!(d2xx::FT_Read(
         ft_handle,
         bytes.as_mut_ptr().cast(),
-        bytes_to_read,
+        bytes_to_read as u32,
         &mut bytes_read
     ));
     unsafe { bytes.set_len(bytes_read as usize) };
@@ -255,7 +259,7 @@ pub fn read(ft_handle: FtHandle, bytes_to_read: u32) -> Result<Vec<u8>, FtError>
 }
 
 /// 3.11 FT_Write
-pub fn write(ft_handle: FtHandle, data: &Vec<u8>) -> Result<u32, FtError> {
+pub fn write(ft_handle: FtHandle, data: &Vec<u8>) -> Result<usize, FtError> {
     let mut bytes_written: u32 = 0;
     let bytes_to_be_written: u32 = data.len() as u32;
     let mut bytes = data.clone();
@@ -265,7 +269,7 @@ pub fn write(ft_handle: FtHandle, data: &Vec<u8>) -> Result<u32, FtError> {
         bytes_to_be_written,
         &mut bytes_written
     ));
-    Ok(bytes_written)
+    Ok(bytes_written as usize)
 }
 
 /// 3.12 FT_SetBaudRate
@@ -281,12 +285,17 @@ pub fn set_divisor(ft_handle: FtHandle, divisor: u16) -> Result<(), FtError> {
 }
 
 /// 3.14 FT_SetDataCharacteristics
-pub fn set_data_characteristics(ft_handle: FtHandle, uart_info: UartInfo) -> Result<(), FtError> {
+pub fn set_data_characteristics(
+    ft_handle: FtHandle,
+    bits_per_word: BitsPerWord,
+    stop_bits: StopBits,
+    parity: Parity,
+) -> Result<(), FtError> {
     ft_try!(d2xx::FT_SetDataCharacteristics(
         ft_handle,
-        uart_info.bits as u8,
-        uart_info.stop_bits as u8,
-        uart_info.parity as u8
+        bits_per_word as u8,
+        stop_bits as u8,
+        parity as u8
     ));
     Ok(())
 }
@@ -351,10 +360,10 @@ pub fn get_modem_status(ft_handle: FtHandle) -> Result<u32, FtError> {
 // Note, 3.22 and 3.23 are not supported. Use 3.21 instead.
 
 /// 3.24 FT_GetQueueStatus
-pub fn get_queue_status(ft_handle: FtHandle) -> Result<u32, FtError> {
+pub fn get_queue_status(ft_handle: FtHandle) -> Result<usize, FtError> {
     let mut bytes_in_rx_queue: u32 = 0;
     ft_try!(d2xx::FT_GetQueueStatus(ft_handle, &mut bytes_in_rx_queue));
-    Ok(bytes_in_rx_queue)
+    Ok(bytes_in_rx_queue as usize)
 }
 
 /// 3.25 FT_GetDeviceInfo

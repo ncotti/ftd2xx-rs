@@ -113,7 +113,7 @@ impl BitBangerSync {
     ///
     /// Note: there is usually a 500ms to a 1s delay between a value being
     /// written and the read value being available.
-    pub fn len(&self) -> Result<u32, FtError> {
+    pub fn len(&self) -> Result<usize, FtError> {
         let bytes_to_be_read = classic::get_queue_status(self.device.handle)?;
         Ok(bytes_to_be_read)
     }
@@ -135,7 +135,7 @@ impl BitBangerSync {
     /// corresponds to the initial state of the bus, before any operation
     /// is performed, and the last value is the response from the last
     /// transaction.
-    pub fn read_all(&self, bytes_to_read: u32) -> Result<Vec<u8>, FtError> {
+    pub fn read_all(&self, bytes_to_read: usize) -> Result<Vec<u8>, FtError> {
         let available_bytes = self.len()?;
 
         // If zero, read as much data as available
@@ -149,7 +149,7 @@ impl BitBangerSync {
         // electrical state of the pins and write that to the channel. That
         // way, the read queue will be filled.
         if bytes_to_read > available_bytes {
-            let bytes_to_write = (bytes_to_read - available_bytes) as usize;
+            let bytes_to_write = bytes_to_read - available_bytes;
             let pin_values = vec![classic::get_bit_mode(self.device.handle)?; bytes_to_write];
             self.write_all(&pin_values)?;
         }
@@ -171,7 +171,7 @@ impl BitBangerSync {
     ///
     /// The returned value will be "0" or "1" depending if the electrical line
     /// was "LOW" or "HIGH" just before the last write operation.
-    pub fn read(&self, pin: u8, bytes_to_read: u32) -> Result<Vec<u8>, FtError> {
+    pub fn read(&self, pin: u8, bytes_to_read: usize) -> Result<Vec<u8>, FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
         }
@@ -190,7 +190,7 @@ impl BitBangerSync {
     ///
     /// Returns the number of bytes actually written, which can be less than
     /// the specified amount if the Tx queue is full.
-    pub fn write_all(&self, bytes: &Vec<u8>) -> Result<u32, FtError> {
+    pub fn write_all(&self, bytes: &Vec<u8>) -> Result<usize, FtError> {
         let bytes_written = classic::write(self.device.handle, &bytes)?;
         Ok(bytes_written)
     }
@@ -206,7 +206,7 @@ impl BitBangerSync {
     ///
     /// An `FtError::WriteGPIOInput` will be returned if trying to write a
     /// GPIO which was set as input.
-    pub fn write(&self, pin: u8, bytes: &Vec<u8>) -> Result<u32, FtError> {
+    pub fn write(&self, pin: u8, bytes: &Vec<u8>) -> Result<usize, FtError> {
         if pin > 7 {
             return Err(FtError::InvalidArgs);
         }
@@ -333,7 +333,7 @@ mod tests {
 
         // Write a series of bytes in channel A
         let sequence: Vec<u8> = vec![0xAA, 0xBB, 0xCC];
-        assert!(cha.write_all(&sequence)? == sequence.len() as u32);
+        assert!(cha.write_all(&sequence)? == sequence.len());
         sleep(time::Duration::from_secs(1));
 
         assert!(cha.len()? == 3);
