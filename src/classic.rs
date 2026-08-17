@@ -693,6 +693,7 @@ pub fn set_usb_parameters(
     Ok(())
 }
 
+/// I2C standard clock rates
 #[repr(u32)]
 pub enum I2cClockRate {
     /// 100 KHz
@@ -830,4 +831,100 @@ pub fn init_lib_mpsse() {
 /// 3.3.2 Cleanup_libMPSSE
 pub fn cleanup_lib_mpsse() {
     unsafe { mpsse_i2c::Cleanup_libMPSSE() };
+}
+
+
+/// 3.1.1 SPI_GetNumChannels
+pub fn spi_get_num_channels() -> Result<u32, FtError> {
+    let mut num_channels: u32 = 0;
+    ft_try!(mpsse_spi::SPI_GetNumChannels(&mut num_channels));
+    Ok(num_channels)
+}
+
+/// 3.1.2 SPI_GetChannelInfo
+pub fn spi_get_channel_info(index: u32) -> Result<DevInfo, FtError> {
+    let mut ft_device_info: mpsse_spi::FT_DEVICE_LIST_INFO_NODE =
+        mpsse_spi::FT_DEVICE_LIST_INFO_NODE {
+            Flags: 0,
+            Type: 0,
+            ID: 0,
+            LocId: 0,
+            SerialNumber: [0; 16],
+            Description: [0; 64],
+            ftHandle: std::ptr::null_mut(),
+        };
+
+    ft_try!(mpsse_spi::SPI_GetChannelInfo(index, &mut ft_device_info));
+
+    let info = DevInfo::from(ft_device_info);
+    Ok(info)
+}
+
+/// 3.1.3 SPI_OpenChannel
+pub fn spi_open_channel(index: u32) -> Result<FtHandle, FtError> {
+    let mut handle: FtHandle = null_mut();
+    ft_try!(mpsse_spi::SPI_OpenChannel(index, &mut handle));
+    Ok(handle)
+}
+
+/// 3.1.4 SPI_InitChannel
+pub fn spi_init_channel(handle: FtHandle, clock_rate: u32, latency_timer: u8, options:u32) -> Result<(), FtError> {
+    let mut config = mpsse_spi::ChannelConfig {
+        ClockRate: clock_rate,
+        LatencyTimer: latency_timer,
+        configOptions: options,
+        Pin: 0,
+        currentPinState: 0,
+    };
+    ft_try!(mpsse_spi::SPI_InitChannel(handle, &mut config));
+    Ok(())
+}
+
+/// 3.1.5 SPI_CloseChannel
+pub fn spi_close_channel(handle: FtHandle) -> Result<(), FtError> {
+    ft_try!(mpsse_spi::SPI_CloseChannel(handle));
+    Ok(())
+}
+
+/// 3.1.6 SPI_Read
+pub fn spi_read(handle: FtHandle, size: usize, options:u32) -> Result<Vec<u8>, FtError> {
+    let mut bytes_read: u32 = 0;
+    let mut data: Vec<u8> = Vec::new();
+    data.reserve_exact(size);
+    ft_try!(mpsse_spi::SPI_Read(handle, data.as_mut_ptr(), size as u32, &mut bytes_read, options));
+
+    unsafe{data.set_len(bytes_read as usize)};
+    Ok(data)
+}
+
+/// 3.1.7 SPI_Write
+pub fn spi_write(handle: FtHandle, data: &Vec<u8>, options: u32) -> Result<usize, FtError> {
+    let mut bytes_written: u32 = 0;
+    let mut data = data.clone();
+    ft_try!(mpsse_spi::SPI_Write(handle, data.as_mut_ptr(), data.len() as u32, &mut bytes_written, options));
+    Ok(bytes_written as usize)
+}
+
+/// 3.1.8 SPI_ReadWrite
+pub fn spi_read_write(handle: FtHandle, data: &Vec<u8>, options: u32) -> Result<Vec<u8>, FtError> {
+    let mut read_data: Vec<u8> = Vec::new();
+    let mut write_data: Vec<u8> = data.clone();
+    let mut bytes_written_read: u32 = 0;
+    read_data.reserve_exact(write_data.len());
+    ft_try!(mpsse_spi::SPI_ReadWrite(handle, read_data.as_mut_ptr(), write_data.as_mut_ptr(), write_data.len() as u32, &mut bytes_written_read, options));
+    unsafe{read_data.set_len(bytes_written_read as usize)};
+    Ok(read_data)
+}
+
+/// 3.1.9 SPI_IsBusy
+pub fn spi_is_busy(handle: FtHandle) -> Result<bool, FtError> {
+    let mut miso_state: u32 = 0;
+    ft_try!(mpsse_spi::SPI_IsBusy(handle, &mut miso_state));
+    Ok(miso_state != 0)
+}
+
+/// 3.1.10 SPI_ChangeCS
+pub fn spi_change_cs(handle: FtHandle, options: u32) -> Result<(), FtError> {
+    ft_try!(mpsse_spi::SPI_ChangeCS(handle, options));
+    Ok(())
 }
