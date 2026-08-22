@@ -10,6 +10,7 @@ pub mod utils;
 
 pub mod bit_bang;
 pub mod bit_bang_sync;
+pub mod mpsse;
 pub mod uart;
 
 /// FtHandle is a void* FT_HANDLE. It is used to manage any FT device.

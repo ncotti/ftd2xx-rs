@@ -833,7 +833,6 @@ pub fn cleanup_lib_mpsse() {
     unsafe { mpsse_i2c::Cleanup_libMPSSE() };
 }
 
-
 /// 3.1.1 SPI_GetNumChannels
 pub fn spi_get_num_channels() -> Result<u32, FtError> {
     let mut num_channels: u32 = 0;
@@ -868,7 +867,12 @@ pub fn spi_open_channel(index: u32) -> Result<FtHandle, FtError> {
 }
 
 /// 3.1.4 SPI_InitChannel
-pub fn spi_init_channel(handle: FtHandle, clock_rate: u32, latency_timer: u8, options:u32) -> Result<(), FtError> {
+pub fn spi_init_channel(
+    handle: FtHandle,
+    clock_rate: u32,
+    latency_timer: u8,
+    options: u32,
+) -> Result<(), FtError> {
     let mut config = mpsse_spi::ChannelConfig {
         ClockRate: clock_rate,
         LatencyTimer: latency_timer,
@@ -887,13 +891,19 @@ pub fn spi_close_channel(handle: FtHandle) -> Result<(), FtError> {
 }
 
 /// 3.1.6 SPI_Read
-pub fn spi_read(handle: FtHandle, size: usize, options:u32) -> Result<Vec<u8>, FtError> {
+pub fn spi_read(handle: FtHandle, size: usize, options: u32) -> Result<Vec<u8>, FtError> {
     let mut bytes_read: u32 = 0;
     let mut data: Vec<u8> = Vec::new();
     data.reserve_exact(size);
-    ft_try!(mpsse_spi::SPI_Read(handle, data.as_mut_ptr(), size as u32, &mut bytes_read, options));
+    ft_try!(mpsse_spi::SPI_Read(
+        handle,
+        data.as_mut_ptr(),
+        size as u32,
+        &mut bytes_read,
+        options
+    ));
 
-    unsafe{data.set_len(bytes_read as usize)};
+    unsafe { data.set_len(bytes_read as usize) };
     Ok(data)
 }
 
@@ -901,7 +911,13 @@ pub fn spi_read(handle: FtHandle, size: usize, options:u32) -> Result<Vec<u8>, F
 pub fn spi_write(handle: FtHandle, data: &Vec<u8>, options: u32) -> Result<usize, FtError> {
     let mut bytes_written: u32 = 0;
     let mut data = data.clone();
-    ft_try!(mpsse_spi::SPI_Write(handle, data.as_mut_ptr(), data.len() as u32, &mut bytes_written, options));
+    ft_try!(mpsse_spi::SPI_Write(
+        handle,
+        data.as_mut_ptr(),
+        data.len() as u32,
+        &mut bytes_written,
+        options
+    ));
     Ok(bytes_written as usize)
 }
 
@@ -911,8 +927,15 @@ pub fn spi_read_write(handle: FtHandle, data: &Vec<u8>, options: u32) -> Result<
     let mut write_data: Vec<u8> = data.clone();
     let mut bytes_written_read: u32 = 0;
     read_data.reserve_exact(write_data.len());
-    ft_try!(mpsse_spi::SPI_ReadWrite(handle, read_data.as_mut_ptr(), write_data.as_mut_ptr(), write_data.len() as u32, &mut bytes_written_read, options));
-    unsafe{read_data.set_len(bytes_written_read as usize)};
+    ft_try!(mpsse_spi::SPI_ReadWrite(
+        handle,
+        read_data.as_mut_ptr(),
+        write_data.as_mut_ptr(),
+        write_data.len() as u32,
+        &mut bytes_written_read,
+        options
+    ));
+    unsafe { read_data.set_len(bytes_written_read as usize) };
     Ok(read_data)
 }
 
