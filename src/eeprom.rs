@@ -28,7 +28,7 @@ use crate::{FtError, FtHandle, classic};
 /// An Eeprom device must define the following tratis:
 /// * Sized: A known size at compile time.
 /// * Default: A way to create a default valued configuration.
-/// * From<FtEeprom>: Values from the `FT_EEPROM_XXX` type should be able
+/// * From\<FtEeprom\>: Values from the `FT_EEPROM_XXX` type should be able
 /// * Clone: To duplicate an Eeprom configuration.
 /// to be converted into this struct.
 pub trait Eeprom: Sized + Default + From<Self::FtEeprom> + Clone {

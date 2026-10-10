@@ -23,7 +23,7 @@ pub struct EepromHeader {
     /// having to read it from the EEPROM. If `false`, it won't be visible.
     pub serial_number_enable: bool,
 
-    /// Max power drawn from the USB interface. Valid values are: [0;500]
+    /// Max power drawn from the USB interface. Valid values are: \[0;500\]
     /// If set to zero, the device will be `self_powered`, i.e. it won't
     /// draw any current from the USB interface, but rather use its own
     /// external power source.

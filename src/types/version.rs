@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-/// Holds the current library version, as v.<major>.<minor>.<build>.
+/// Holds the current library version, as v.\<major\>.\<minor\>.\<build\>.
 #[derive(Debug, Copy, Clone)]
 #[allow(missing_docs)]
 pub struct Version {
@@ -16,7 +16,7 @@ pub struct Version {
 
 impl Version {
     /// Creates a new version struct from a "version number".
-    /// E.g., version "v3.01.15 == v<major>.<minor>.<build>" is expected to be
+    /// E.g., version "v3.01.15 == v\<major\>.\<minor\>.\<build\>" is expected to be
     /// the number 0x00030115.
     pub fn new(version: u32) -> Self {
         Self {

@@ -301,7 +301,7 @@ mod tests {
 
     /// This test requires the eight pins from channel A and channel B to be
     /// connected between each other.
-    //#[cfg(feature = "test-ft4232h")]
+    #[cfg(feature = "test-ft4232h")]
     #[test]
     fn test_io() -> Result<(), FtError> {
         let mut cha = BitBangerSync::try_from(0)?;

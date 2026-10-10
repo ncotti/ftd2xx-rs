@@ -202,6 +202,7 @@ mod tests {
     /// (5)DSR#     <-      (4)DTR#
     /// (6)DCD#     <-      (6)DCD#
     /// (7)RI#      <-      (7)RI#
+    #[cfg(feature = "test-ft4232h")]
     #[test]
     fn test_uart_read_write() -> Result<(), FtError> {
         let uart_a = Uart::try_from(2)?;
