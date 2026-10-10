@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! Doc
 
 use ftd2xx_sys::d2xx::{FT_EEPROM_PD, FT_EEPROM_PD_PDO_mv_ma};

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 use ftd2xx_rs::EepromFt4232h;
 use ftd2xx_rs::eeprom::Eeprom;
 use ftd2xx_rs::scan;

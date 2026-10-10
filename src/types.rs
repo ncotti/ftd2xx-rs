@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! # Types module.
 //!
 //! It re-import all relevant types from the `types` folder to be used by the
