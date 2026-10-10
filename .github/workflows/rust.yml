@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           path: ${{ env.LIB_REPO_PATH }}
+          repository: ncotti/ftd2xx-sys
           lfs: true
 
       - name: "Install libsigrok"
