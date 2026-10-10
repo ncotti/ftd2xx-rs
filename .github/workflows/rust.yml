@@ -42,7 +42,7 @@ jobs:
         run: |
           tar -C "${{ env.LIB_REPO_PATH }}/vendor" -xzf "${{ env.LIB_REPO_PATH }}/${{ env.D2XX_TAR_FILE }}"
           tar -C "${{ env.LIB_REPO_PATH }}/vendor" -xzf "${{ env.LIB_REPO_PATH }}/${{ env.MPSSE_TAR_FILE }}"
-          ./install_libs.sh "${{ env.LIB_REPO_PATH }}/${{ env.D2XX_SRC_PATH }}" "${{ env.LIB_REPO_PATH }}/${{ env.MPSSE_SRC_PATH }}"
+          ${{ env.LIB_REPO_PATH }}/install_libs.sh "${{ env.LIB_REPO_PATH }}/${{ env.D2XX_SRC_PATH }}" "${{ env.LIB_REPO_PATH }}/${{ env.MPSSE_SRC_PATH }}"
 
       - name: "Call cargo"
         uses: ncotti/cotti-ci/actions/rust@main
