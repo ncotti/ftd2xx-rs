@@ -39,8 +39,8 @@ jobs:
 
       - name: "Install libftd2xx"
         run: |
-          tar -C "${{ env.LIB_REPO_PATH }}/vendor" -xzf "${{ env.D2XX_TAR_FILE }}"
-          tar -C "${{ env.LIB_REPO_PATH }}/vendor" -xzf "${{ env.MPSSE_TAR_FILE }}"
+          tar -C "${{ env.LIB_REPO_PATH }}" -xzf "${{ env.D2XX_TAR_FILE }}"
+          tar -C "${{ env.LIB_REPO_PATH }}" -xzf "${{ env.MPSSE_TAR_FILE }}"
           ./install_libs.sh "${{ env.LIB_REPO_PATH }}/${{ env.D2XX_SRC_PATH }}" "${{ env.LIB_REPO_PATH }}/${{ env.MPSSE_SRC_PATH }}"
 
       - name: "Call cargo"
