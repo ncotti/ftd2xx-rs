@@ -225,6 +225,7 @@ impl BitBanger {
 #[cfg(test)]
 mod tests {
 
+    #[cfg(feature = "test-ft4232h")]
     use super::*;
 
     /// This test requires the eight pins from channel A and channel B to be

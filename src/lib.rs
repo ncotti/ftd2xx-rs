@@ -37,7 +37,7 @@ use crate::eeprom::Eeprom;
 /// use ftd2xx_rs::scan;
 /// use ftd2xx_rs::DevInfo;
 ///
-/// let device_infos: Vec<DevInfo> = scan();
+/// let device_infos: Vec\<DevInfo\> = scan();
 /// for info in device_infos {
 ///     println!("{}", info);
 /// }
@@ -57,7 +57,7 @@ pub fn scan() -> Result<Vec<DevInfo>, FtError> {
 /// #[cfg(feature = "test-ft4232h")]
 /// use ftd2xx_rs::scan_custom;
 ///
-/// let devices_infos: Vec<DevInfo> = scan_custom(0xABCD, 0x1234);
+/// let devices_infos: Vec\<DevInfo\> = scan_custom(0xABCD, 0x1234);
 /// for info in device_infos {
 ///     println!("{}", info);
 /// }
@@ -192,9 +192,10 @@ impl Drop for Device {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::DevType;
-    use rand::RngExt;
     use regex::Regex;
+
+    #[cfg(feature = "test-ft4232h")]
+    use crate::types::DevType;
 
     /// Get library version
     #[test]
