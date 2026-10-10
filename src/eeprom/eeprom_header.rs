@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! Doc
 
 use crate::types::{DevType, FT_DEFAULT_PRODUCT_ID, FT_DEFAULT_VENDOR_ID};

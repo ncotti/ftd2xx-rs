@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! FT Device type enumeration.
 
 use ftd2xx_sys::d2xx;

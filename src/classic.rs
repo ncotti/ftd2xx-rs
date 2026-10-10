@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! Implements safe Rust wrappers around all D2XX classic functions as
 //! described in section 3 of the D2XX Programmer's Guide.
 

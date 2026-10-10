@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! FT errors. These error codes match the `FT_STATUS` return values from
 //! the FTD2XX library functions.
 

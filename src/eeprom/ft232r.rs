@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Nicolas Gabriel Cotti
+
 //! EEPROM structures for the following devices:
 //! * FT232R
 
